@@ -75,7 +75,7 @@
   .today-pill{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-top:2px}
   .today-pill b{color:var(--acc2)}
 </style>
-<link rel="stylesheet" href="css/launcher.css?v=2">
+<link rel="stylesheet" href="css/launcher.css?v=3">
 </head>
 <body>
 
@@ -277,4 +277,15 @@ function warekiCompute(){
   if (era && nen >= 1){
     const y = warekiToSeireki(era.value, nen);
     const nenLabel = (nen === 1) ? '元' : nen;
-    out2.innerHTML = y ? ('西暦 <b>' + y + '</b> 年 <sma
+    out2.innerHTML = y ? ('西暦 <b>' + y + '</b> 年 <small>（' + era.value + nenLabel + '年）</small>') : '—';
+  } else if (out2){
+    out2.textContent = '—';
+  }
+}
+
+/* 起動 */
+renderUnit();
+</script>
+<script src="js/launcher.js?v=3"></script>
+</body>
+</html>
