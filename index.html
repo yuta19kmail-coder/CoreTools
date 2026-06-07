@@ -75,6 +75,7 @@
   .today-pill{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-top:2px}
   .today-pill b{color:var(--acc2)}
 </style>
+<link rel="stylesheet" href="css/launcher.css?v=1">
 </head>
 <body>
 
@@ -93,6 +94,9 @@
     <div class="sg">準備中</div>
     <div class="si dis"><span>🧮</span><span>税込⇔税抜</span><span class="soon">近日</span></div>
     <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
+
+    <!-- CoreFlow アプリランチャー（共通） -->
+    <div data-cf-launcher data-current="coretools"></div>
   </div>
 
   <div id="main"></div>
@@ -282,5 +286,6 @@ function warekiCompute(){
 /* 起動 */
 renderUnit();
 </script>
+<script src="js/launcher.js?v=1"></script>
 </body>
 </html>
