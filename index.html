@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoreTools - 日常業務の便利ツール集（開発中サンプル）</title>
+<style>
+  :root{
+    --acc:#64748b; --acc2:#94a3b8; --accd:#475569;
+    --bg:#0e1116; --bg2:#161b22; --bg3:#1d242e; --bg4:#252e3a;
+    --text:#e6edf3; --text2:#9aa7b4; --text3:#6b7886;
+    --border:rgba(255,255,255,.10); --r:12px;
+  }
+  [data-theme="light"]{
+    --bg:#f1f5f9; --bg2:#ffffff; --bg3:#f1f5f9; --bg4:#e2e8f0;
+    --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+    --border:rgba(15,23,42,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic Medium","Meiryo",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+
+  .dev-badge{display:inline-flex;align-items:center;gap:5px;margin-left:10px;padding:3px 9px;border-radius:999px;
+    font-size:11px;font-weight:700;white-space:nowrap;color:#fff;border:1px solid rgba(255,255,255,.25);
+    background:repeating-linear-gradient(45deg,#475569,#475569 8px,#334155 8px,#334155 16px)}
+
+  #app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:54px 1fr;height:100vh}
+  #topbar{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
+  .logo{font-size:18px;font-weight:800}
+  .logo b{color:var(--acc2)}
+  .logo .ver{font-size:11px;color:var(--text3);font-weight:600;margin-left:4px}
+  .spacer{flex:1}
+  .tb-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:14px}
+
+  #side{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:12px 0}
+  .sg{font-size:10px;color:var(--text3);letter-spacing:.08em;padding:14px 16px 4px;text-transform:uppercase}
+  .si{display:flex;align-items:center;gap:9px;padding:10px 16px;cursor:pointer;font-size:13.5px;color:var(--text2)}
+  .si:hover{background:var(--bg3);color:var(--text)}
+  .si.on{background:var(--bg3);color:var(--text);box-shadow:inset 3px 0 0 var(--acc);font-weight:700}
+  .si.dis{opacity:.45;cursor:not-allowed}
+  .si .soon{margin-left:auto;font-size:9.5px;color:var(--text3);border:1px solid var(--border);border-radius:999px;padding:1px 6px}
+
+  #main{overflow:auto;padding:20px 22px}
+  .thead{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+  .ttitle{font-size:20px;font-weight:800}
+  .tsub{font-size:12px;color:var(--text3)}
+  .wrap{max-width:720px}
+
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-top:16px}
+  .card-h{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .card-h .dir{margin-left:auto;font-size:11px;color:var(--text3);font-weight:500}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+  .chip{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}
+  .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .in{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:16px;font-weight:600}
+  .in.num{width:160px;text-align:right}
+  .in.big{font-size:18px}
+  select.in{font-weight:600}
+  .lab{font-size:12px;color:var(--text3);margin:2px 0 5px}
+
+  .res{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .ru{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+  .ru.self{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+  .ru .uname{font-size:11px;color:var(--text3)}
+  .ru .uval{font-size:17px;font-weight:800;margin-top:2px;word-break:break-all}
+  .ru.self .uname{color:var(--acc2)}
+
+  .big-out{font-size:24px;font-weight:800;margin-top:6px}
+  .big-out small{font-size:13px;font-weight:600;color:var(--text3)}
+  .hint{font-size:11px;color:var(--text3);line-height:1.7;margin-top:12px}
+  .today-pill{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-top:2px}
+  .today-pill b{color:var(--acc2)}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="topbar">
+    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.1.0</span></div>
+    <span class="dev-badge">🚧 開発中サンプル</span>
+    <div class="spacer"></div>
+    <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
+  </div>
+
+  <div id="side">
+    <div class="sg">便利ツール</div>
+    <div class="si on" data-tool="unit" onclick="showTool('unit')"><span>🔧</span><span>単位変換</span></div>
+    <div class="si" data-tool="wareki" onclick="showTool('wareki')"><span>📅</span><span>和暦⇔西暦</span></div>
+    <div class="sg">準備中</div>
+    <div class="si dis"><span>🧮</span><span>税込⇔税抜</span><span class="soon">近日</span></div>
+    <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
+  </div>
+
+  <div id="main"></div>
+</div>
+
+<script>
+/* ===================== 共通 ===================== */
+function toggleTheme(){
+  const r = document.documentElement;
+  const next = (r.getAttribute('data-theme') === 'light') ? 'dark' : 'light';
+  r.setAttribute('data-theme', next);
+  document.getElementById('theme-btn').textContent = next === 'light' ? '☀️' : '🌙';
+}
+function showTool(id){
+  document.querySelectorAll('.si').forEach(s => s.classList.toggle('on', s.dataset.tool === id));
+  if (id === 'unit')   renderUnit();
+  if (id === 'wareki') renderWareki();
+}
+/* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
+function fmt(n){
+  if (!isFinite(n)) return '—';
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 1000)      s = n.toLocaleString('ja-JP', { maximumFractionDigits: 2 });
+  else if (abs >= 1)    s = n.toLocaleString('ja-JP', { maximumFractionDigits: 4 });
+  else if (abs >= 0.001)s = n.toFixed(5);
+  else                  s = n.toExponential(3);
+  if (s.indexOf('.') >= 0 && s.indexOf('e') < 0) s = s.replace(/\.?0+$/, '');
+  return s;
+}
+
+/* ===================== ① 単位変換 ===================== */
+/* 係数 = その単位1つが基準単位で何個分か。out = value * f[from] / f[to] */
+const UNIT_CATS = {
+  torque: { label: 'トルク', base: 'N·m', units: {
+    'N·m': 1, 'kgf·m': 9.80665, 'lbf·ft': 1.355818, 'N·cm': 0.01, 'kgf·cm': 0.0980665 } },
+  length: { label: '長さ', base: 'mm', units: {
+    'mm': 1, 'cm': 10, 'm': 1000, 'inch': 25.4, 'ft': 304.8 } },
+  press:  { label: '空気圧', base: 'kPa', units: {
+    'kPa': 1, 'bar': 100, 'psi': 6.894757, 'kgf/cm²': 98.0665, 'MPa': 1000 } },
+  volume: { label: '容量', base: 'L', units: {
+    'L': 1, 'mL': 0.001, 'cc': 0.001, 'US gal': 3.785412, 'US qt': 0.946353 } },
+  weight: { label: '重さ', base: 'kg', units: {
+    'kg': 1, 'g': 0.001, 't': 1000, 'lb': 0.453592 } },
+  temp:   { label: '温度', base: '°C', units: { '°C': 1, '°F': 1, 'K': 1 }, special: true },
+};
+let unitState = { cat: 'torque', from: 'N·m', val: '100' };
+
+function renderUnit(){
+  const m = document.getElementById('main');
+  let h = '<div class="thead"><div class="ttitle">🔧 単位変換</div><div class="tsub">整備で使う単位をまとめて換算（入力すると全単位が即計算）</div></div>';
+  h += '<div class="wrap">';
+
+  // カテゴリチップ
+  h += '<div class="card"><div class="chips">';
+  for (const k in UNIT_CATS){
+    h += '<button class="chip' + (unitState.cat === k ? ' on' : '') + '" onclick="unitPickCat(\'' + k + '\')">' + UNIT_CATS[k].label + '</button>';
+  }
+  h += '</div>';
+
+  const cat = UNIT_CATS[unitState.cat];
+  const unitKeys = Object.keys(cat.units);
+  if (unitKeys.indexOf(unitState.from) < 0) unitState.from = unitKeys[0];
+
+  // 入力
+  h += '<div class="lab" style="margin-top:14px">値を入れて、その単位を選ぶ</div><div class="row">';
+  h += '<input type="number" class="in num big" id="u-val" value="' + unitState.val + '" oninput="unitOnInput()" step="any">';
+  h += '<select class="in" id="u-from" onchange="unitOnFrom()">';
+  unitKeys.forEach(u => { h += '<option' + (u === unitState.from ? ' selected' : '') + '>' + u + '</option>'; });
+  h += '</select>';
+  h += '</div>';
+
+  // 結果
+  h += '<div class="res" id="u-res"></div>';
+  h += '<div class="hint">トルクレンチ・タイヤ空気圧・オイル量など、現場でよく使う換算を想定。係数は固定なのでAIなしで正確に計算しています。</div>';
+  h += '</div></div>';
+  m.innerHTML = h;
+  unitCompute();
+}
+function unitPickCat(k){ unitState.cat = k; unitState.from = UNIT_CATS[k].base; renderUnit(); }
+function unitOnInput(){ unitState.val = document.getElementById('u-val').value; unitCompute(); }
+function unitOnFrom(){ unitState.from = document.getElementById('u-from').value; unitCompute(); }
+
+function tempConvert(v, from, to){
+  // まず °C に正規化
+  let c;
+  if (from === '°C') c = v;
+  else if (from === '°F') c = (v - 32) * 5 / 9;
+  else c = v - 273.15;            // K
+  if (to === '°C') return c;
+  if (to === '°F') return c * 9 / 5 + 32;
+  return c + 273.15;             // K
+}
+function unitCompute(){
+  const box = document.getElementById('u-res');
+  if (!box) return;
+  const cat = UNIT_CATS[unitState.cat];
+  const v = parseFloat(unitState.val);
+  let h = '';
+  Object.keys(cat.units).forEach(u => {
+    let out;
+    if (isNaN(v)) out = '';
+    else if (cat.special) out = fmt(tempConvert(v, unitState.from, u));
+    else out = fmt(v * cat.units[unitState.from] / cat.units[u]);
+    h += '<div class="ru' + (u === unitState.from ? ' self' : '') + '"><div class="uname">' + u + (u === unitState.from ? '（入力）' : '') + '</div><div class="uval">' + (out === '' ? '—' : out) + '</div></div>';
+  });
+  box.innerHTML = h;
+}
+
+/* ===================== ② 和暦⇔西暦 ===================== */
+/* 元号の開始日。新しい順 */
+const ERAS = [
+  { n: '令和', s: '2019-05-01' },
+  { n: '平成', s: '1989-01-08' },
+  { n: '昭和', s: '1926-12-25' },
+  { n: '大正', s: '1912-07-30' },
+  { n: '明治', s: '1868-01-25' },
+];
+function eraStartYear(e){ return parseInt(e.s.slice(0, 4), 10); }
+
+/* 西暦の日付(YYYY-MM-DD) → 和暦文字列 */
+function seirekiToWareki(dateStr){
+  const e = ERAS.find(x => dateStr >= x.s);
+  if (!e) return '明治より前（対応範囲外）';
+  const y = parseInt(dateStr.slice(0, 4), 10);
+  const nen = y - eraStartYear(e) + 1;
+  const mo = parseInt(dateStr.slice(5, 7), 10);
+  const da = parseInt(dateStr.slice(8, 10), 10);
+  const nenLabel = (nen === 1) ? '元' : nen;
+  return e.n + nenLabel + '年' + mo + '月' + da + '日';
+}
+/* 元号 + 年 → 西暦年 */
+function warekiToSeireki(eraName, nen){
+  const e = ERAS.find(x => x.n === eraName);
+  if (!e || !nen) return null;
+  return eraStartYear(e) + nen - 1;
+}
+
+function renderWareki(){
+  const m = document.getElementById('main');
+  const today = new Date();
+  const tStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  let h = '<div class="thead"><div class="ttitle">📅 和暦⇔西暦</div><div class="tsub">車検証の年号変換に。境目の年も正確（元号は開始日で判定）</div></div>';
+  h += '<div class="wrap">';
+  h += '<div class="today-pill">今日は <b>' + seirekiToWareki(tStr) + '</b>（' + today.getFullYear() + '年）</div>';
+
+  // 西暦 → 和暦
+  h += '<div class="card"><div class="card-h">西暦 → 和暦 <span class="dir">日付を入れる</span></div>';
+  h += '<div class="row"><input type="date" class="in big" id="w-date" value="' + tStr + '" oninput="warekiCompute()"></div>';
+  h += '<div class="big-out" id="w-out1">—</div>';
+  h += '</div>';
+
+  // 和暦 → 西暦
+  h += '<div class="card"><div class="card-h">和暦 → 西暦 <span class="dir">元号と年を入れる</span></div>';
+  h += '<div class="row"><select class="in" id="w-era" onchange="warekiCompute()">';
+  ERAS.forEach(e => { h += '<option' + (e.n === '令和' ? ' selected' : '') + '>' + e.n + '</option>'; });
+  h += '</select>';
+  h += '<input type="number" class="in num" id="w-nen" min="1" value="1" oninput="warekiCompute()" step="1"><span style="font-size:15px;font-weight:700">年</span>';
+  h += '</div>';
+  h += '<div class="big-out" id="w-out2">—</div>';
+  h += '</div>';
+
+  h += '<div class="hint">明治〜令和に対応。元号が変わった年（1912 / 1926 / 1989 / 2019）は、改元日の前後で元号が分かれます。西暦→和暦は日付で正確に判定します。</div>';
+  h += '</div>';
+  m.innerHTML = h;
+  warekiCompute();
+}
+function warekiCompute(){
+  const dEl = document.getElementById('w-date');
+  if (dEl && dEl.value){
+    document.getElementById('w-out1').innerHTML = seirekiToWareki(dEl.value) + ' <small>（' + dEl.value.slice(0,4) + '年）</small>';
+  }
+  const era = document.getElementById('w-era');
+  const nen = parseInt(document.getElementById('w-nen').value, 10);
+  const out2 = document.getElementById('w-out2');
+  if (era && nen >= 1){
+    const y = warekiToSeireki(era.value, nen);
+    const nenLabel = (nen === 1) ? '元' : nen;
+    out2.innerHTML = y ? ('西暦 <b>' + y + '</b> 年 <small>（' + era.value + nenLabel + '年）</small>') : '—';
+  } else if (out2){
+    out2.textContent = '—';
+  }
+}
+
+/* 起動 */
+renderUnit();
+</script>
+</body>
+</html>
