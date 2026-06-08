@@ -75,13 +75,17 @@
   .today-pill{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-top:2px}
   .today-pill b{color:var(--acc2)}
 </style>
-<link rel="stylesheet" href="css/launcher.css?v=3">
+<link rel="stylesheet" href="css/launcher.css?v=4">
+<!-- PDF読み取り（pdf.js）＋ ベクターPDF書き出し（jsPDF＋autotable・日本語フォント埋め込み）：パーツ税抜計算ツール用 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
 <div id="app">
   <div id="topbar">
-    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.1.0</span></div>
+    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.3.6</span></div>
     <span class="dev-badge">🚧 開発中サンプル</span>
     <div class="spacer"></div>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
@@ -91,8 +95,8 @@
     <div class="sg">便利ツール</div>
     <div class="si on" data-tool="unit" onclick="showTool('unit')"><span>🔧</span><span>単位変換</span></div>
     <div class="si" data-tool="wareki" onclick="showTool('wareki')"><span>📅</span><span>和暦⇔西暦</span></div>
+    <div class="si" data-tool="parts" onclick="showTool('parts')"><span>🧾</span><span>パーツ税抜計算</span></div>
     <div class="sg">準備中</div>
-    <div class="si dis"><span>🧮</span><span>税込⇔税抜</span><span class="soon">近日</span></div>
     <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
 
     <!-- CoreFlow アプリランチャー（共通） -->
@@ -114,6 +118,7 @@ function showTool(id){
   document.querySelectorAll('.si').forEach(s => s.classList.toggle('on', s.dataset.tool === id));
   if (id === 'unit')   renderUnit();
   if (id === 'wareki') renderWareki();
+  if (id === 'parts')  renderParts();
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
 function fmt(n){
@@ -281,6 +286,205 @@ function warekiCompute(){
   } else if (out2){
     out2.textContent = '—';
   }
+}
+
+/* ===================== ③ パーツ税抜計算（請求書PDF → 税抜計算表PDF） ===================== */
+/* トーマツ(MINI/BMW)の請求書PDFをドラッグ → pdf.jsで読取（CMap指定で日本語OK）→
+   税込→税抜に変換 → 税抜計算表PDFを自動生成＆自動ダウンロード。プレビューなし・手間なし。 */
+let partsRate = 10;   // 消費税率（%）。既定10%（パーツ）
+
+function renderParts(){
+  const m = document.getElementById('main');
+  m.innerHTML =
+    '<div class="thead"><div class="ttitle">🧾 パーツ税抜計算</div><div class="tsub">請求書PDFを入れると、税抜の計算表PDFを自動で作って保存します</div></div>'
+    + '<div class="wrap">'
+    + '<div class="card"><div class="card-h">消費税率</div>'
+    + '<div class="chips">'
+    + '<button class="chip' + (partsRate===10?' on':'') + '" onclick="partsSetRate(10)">10%</button>'
+    + '<button class="chip' + (partsRate===8?' on':'') + '" onclick="partsSetRate(8)">8%</button>'
+    + '</div></div>'
+    + '<div class="card" id="parts-drop" style="text-align:center;cursor:pointer;border-style:dashed"'
+    + ' ondragover="event.preventDefault();this.style.borderColor=\'var(--acc2)\'"'
+    + ' ondragleave="this.style.borderColor=\'\'"'
+    + ' ondrop="partsOnDrop(event)" onclick="document.getElementById(\'parts-file\').click()">'
+    + '<input type="file" id="parts-file" accept="application/pdf" multiple style="display:none" onchange="partsOnPick(this)">'
+    + '<div style="font-size:30px">🧾📄</div>'
+    + '<div style="font-size:15px;font-weight:700;margin-top:8px">請求書PDFを ここにドラッグ、またはクリックして選ぶ</div>'
+    + '<div class="hint" style="margin-top:6px">入れると自動で税抜計算表PDFを作ってダウンロードします（複数まとめてもOK）。ファイルはPCから外に出ません。</div>'
+    + '</div>'
+    + '<div id="parts-result"></div>'
+    + '</div>';
+}
+function partsSetRate(r){ partsRate = r; renderParts(); }
+function partsOnDrop(ev){
+  ev.preventDefault();
+  const el=document.getElementById('parts-drop'); if(el) el.style.borderColor='';
+  const files=[...(ev.dataTransfer&&ev.dataTransfer.files||[])].filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf');
+  if(files.length) partsProcess(files); else partsSay('PDFファイルを入れてください', true);
+}
+function partsOnPick(input){ const files=[...(input.files||[])]; if(files.length) partsProcess(files); input.value=''; }
+function partsSay(html, isErr){
+  const r=document.getElementById('parts-result'); if(!r) return;
+  r.innerHTML = '<div class="card" style="' + (isErr?'border-color:#b4543c;':'') + '">' + html + '</div>';
+}
+
+/* PDFを行（y座標でグループ化）に復元。pdf.jsはCMap指定で日本語CIDフォントも読める。 */
+async function partsReadRows(file){
+  const lib=window.pdfjsLib;
+  if(!lib){ throw new Error('pdf.js未読込'); }
+  lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf=await file.arrayBuffer();
+  const pdf=await lib.getDocument({ data:buf,
+    cMapUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked:true }).promise;
+  const rows=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const items=tc.items.map(it=>({x:it.transform[4],y:it.transform[5],s:it.str})).filter(o=>o.s.trim()!=='');
+    items.sort((a,b)=>(b.y-a.y)||(a.x-b.x));
+    let cur=null,lastY=null;
+    items.forEach(o=>{ if(lastY===null||Math.abs(o.y-lastY)>4){cur=[];rows.push(cur);} cur.push(o); lastY=o.y; });
+  }
+  return rows;
+}
+/* 行から 明細・車台№・日付 を抽出。列はx座標で判定（数量x≈442/定価x≈464/金額x≈518）。 */
+function partsParse(rows){
+  let sharyo='', hizuke='';
+  const flat=rows.map(r=>r.map(o=>o.s).join(' ').replace(/\s+/g,' ').trim());
+  for(const line of flat){
+    const m=line.match(/([0-9A-Z]{6,8})\s+(\d{4}\/\d{1,2}\/\d{1,2})/);
+    if(m){ sharyo=m[1]; hizuke=m[2]; break; }   // 車台№＝最初の「英数字＋日付」（様 WN03241 2026/06/02）
+  }
+  // 内消費税額を拾う：0なら「すでに税抜」・0以外なら税込（同じグループでも拠点で税抜/税込が違うため判定）
+  let taxAmt=null;
+  for(const line of flat){
+    const tm=line.normalize('NFKC').replace(/\s/g,'').match(/内消費税額\(?([\d,]+)/);
+    if(tm){ taxAmt=parseInt(tm[1].replace(/,/g,''),10); }
+  }
+  const items=[];
+  for(const r of rows){
+    const first=r[0]; if(!first||first.x>=60||!/^\d+$/.test(first.s.trim())) continue;     // 行番号
+    const pn=r.find(o=>o.x>=60&&o.x<130&&/\d{4}/.test(o.s)); if(!pn) continue;            // 部品№
+    const vals=r.filter(o=>o.x>=430&&/^[\d,]/.test(o.s)).sort((a,b)=>a.x-b.x);            // 数量/定価/金額
+    if(vals.length<3) continue;
+    const qty=parseInt(vals[0].s.replace(/,/g,''),10)||0;
+    const teika=parseInt(vals[1].s.replace(/,/g,''),10)||0;                               // 定価（単価・税込）
+    const shikiri=parseInt(String(vals[2].s).split(' ')[0].replace(/,/g,''),10)||0;       // 金額（行計・税込）※末尾レス率は捨てる
+    const name=r.filter(o=>o.x>=130&&o.x<430).map(o=>o.s).join(' ').replace(/\s+/g,' ').trim();
+    if(qty>0&&teika>0) items.push({ no:pn.s.trim(), name, qty, teika, shikiri });
+  }
+  return { items, sharyo, hizuke, taxAmt };
+}
+
+async function partsProcess(files){
+  partsSay('📄 読み取り中…');
+  let okCount=0;
+  for(const f of files){
+    try{
+      const rows=await partsReadRows(f);
+      const d=partsParse(rows);
+      if(!d.items.length){ partsSay('「'+f.name+'」から明細を読み取れませんでした。請求書PDFか確認してください。', true); continue; }
+      if(d.taxAmt===0){ partsSay('⚠ <b>'+(d.sharyo||f.name)+'</b> は<b>すでに税抜の見積書</b>です（内消費税額が 0）。このツールは税込→税抜にするものなので、このPDFは変換しません（そのままお使いください）。', true); continue; }
+      await partsMakePdf(d);
+      okCount++;
+      partsSay('✅ <b>'+ (d.sharyo||f.name) +'</b>：'+ d.items.length +'明細を税抜に変換し、PDFをダウンロードしました。'
+        + partsTotalsLine(d));
+    }catch(e){
+      console.error('[parts]',e);
+      partsSay('「'+f.name+'」の処理でエラーが出ました。もう一度お試しください。', true);
+    }
+  }
+}
+function partsTotalsLine(d){
+  const rate=1+partsRate/100;
+  let komi=0, nuki=0;
+  d.items.forEach(it=>{ komi+=it.shikiri; nuki+=Math.round(it.shikiri/rate); });
+  const y=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  return '<div class="hint" style="margin-top:8px">仕切 合計：税込 '+y(komi)+' ／ <b style="color:var(--acc2)">税抜 '+y(nuki)+'</b>（税率 '+partsRate+'%）</div>';
+}
+
+/* 日本語フォント（Noto Sans JP）を一度だけ取得して jsPDF に埋め込む（ベクター＝文字くっきり） */
+let _jpFontB64=null;
+async function partsEnsureFont(pdf){
+  if(_jpFontB64==null){
+    const url='https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-jp/400Regular/NotoSansJP_400Regular.ttf';
+    const buf=await (await fetch(url)).arrayBuffer();
+    const bytes=new Uint8Array(buf); let bin='';
+    for(let i=0;i<bytes.length;i+=8192){ bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+8192)); }
+    _jpFontB64=btoa(bin);
+  }
+  pdf.addFileToVFS('NotoSansJP.ttf', _jpFontB64);
+  pdf.addFont('NotoSansJP.ttf','NotoSansJP','normal');
+}
+
+/* 税抜計算表をベクターPDFで出力（jsPDF+autotable・日本語フォント埋め込み）＆自動ダウンロード */
+async function partsMakePdf(d){
+  const rate=1+partsRate/100;
+  const y=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  let sumKomiTotal=0,sumGoukei=0;
+  const body=d.items.map((it,i)=>{
+    const teikaKomi=it.teika;                          // 定価(込) 1個あたり（単価）
+    const shikiriKomi=Math.round(it.shikiri/it.qty);   // 仕切(込) 1個あたり＝請求金額÷数量
+    const teikaN=Math.round(teikaKomi/rate);           // 定価(抜) 単価
+    const shikiriN=Math.round(shikiriKomi/rate);       // 仕切(抜) 単価
+    const goukei=Math.round(it.shikiri/rate);          // 合計(抜)＝その行の税抜合計
+    const les=(it.teika*it.qty)?((it.shikiri/(it.teika*it.qty))-1)*100:0;
+    sumKomiTotal+=it.shikiri; sumGoukei+=goukei;
+    return [String(i+1), it.no, (it.name||''), String(it.qty),
+            y(teikaN), y(shikiriN), y(goukei), les.toFixed(1)+'%', y(teikaKomi), y(shikiriKomi)];
+  });
+  const JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+  const pdf=new JsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+  await partsEnsureFont(pdf);
+  pdf.setFont('NotoSansJP','normal');
+  const margin=10, pageW=pdf.internal.pageSize.getWidth();
+  // タイトル＋下線アクセント
+  pdf.setFontSize(13); pdf.text('税抜計算表', margin, 13.5);
+  pdf.setLineWidth(0.5); pdf.line(margin, 15.5, margin+21, 15.5);
+  // 右上：車台№・日付・税率
+  pdf.setFontSize(10); pdf.text('車体番号 '+(d.sharyo||'—'), pageW-margin, 11, {align:'right'});
+  pdf.setFontSize(7.5);  pdf.text((d.hizuke||'')+'　／　税率 '+partsRate+'%', pageW-margin, 15.5, {align:'right'});
+  // 表（内側は細いグレー罫線・抜き3列は後から1本の太枠で囲う・込み2列＝薄グレー・フォントは均一）
+  const GRAY=[240,240,240], BLK=[0,0,0], GRID=[170,170,170];
+  let bx4=null,bx6r=null;
+  pdf.autoTable({
+    startY:20,
+    head:[['#','パーツNo','品名','数量','定価(抜)','仕切(抜)','合計(抜)','レス率','定価(込)','仕切(込)']],
+    body:body,
+    foot:[[{content:'合計',colSpan:6,styles:{halign:'right'}}, {content:y(sumGoukei),styles:{halign:'right'}}, '', '', {content:y(sumKomiTotal),styles:{halign:'right'}}]],
+    styles:{font:'NotoSansJP',fontStyle:'normal',fontSize:7,textColor:BLK,lineColor:GRID,lineWidth:0.1,cellPadding:1,overflow:'linebreak'},
+    headStyles:{font:'NotoSansJP',fontStyle:'normal',fillColor:[233,233,233],textColor:BLK,fontSize:6.5,halign:'center',lineColor:GRID,lineWidth:0.1},
+    footStyles:{font:'NotoSansJP',fontStyle:'normal',fillColor:[255,255,255],textColor:BLK,fontSize:7.5,lineColor:GRID,lineWidth:0.1},
+    columnStyles:{
+      0:{halign:'center',cellWidth:8},
+      1:{cellWidth:24},
+      2:{cellWidth:'auto'},
+      3:{halign:'right',cellWidth:11},
+      4:{halign:'right',cellWidth:19},
+      5:{halign:'right',cellWidth:21},
+      6:{halign:'right',cellWidth:19},
+      7:{halign:'right',cellWidth:13},
+      8:{halign:'right',cellWidth:17,fillColor:GRAY},
+      9:{halign:'right',cellWidth:17,fillColor:GRAY}
+    },
+    margin:{left:margin,right:margin},
+    didDrawCell:function(data){
+      const c=data.cell;
+      if(data.column.index===4) bx4=c.x;
+      if(data.column.index===6) bx6r=c.x+c.width;
+      pdf.setDrawColor(0,0,0);
+      if(data.section==='head'){ pdf.setLineWidth(0.5); pdf.line(c.x,c.y+c.height,c.x+c.width,c.y+c.height); }  // 見出し下の太線
+      if(data.section==='foot'){ pdf.setLineWidth(0.5); pdf.line(c.x,c.y,c.x+c.width,c.y); }                    // 合計上の太線
+      pdf.setLineWidth(0.1); pdf.setDrawColor(170,170,170);
+    }
+  });
+  // 抜き3列を1本の太枠で囲う（前のデザインの“枠”を再現・内側は細グレーのまま）
+  if(bx4!=null&&bx6r!=null){ pdf.setDrawColor(0,0,0); pdf.setLineWidth(0.5); pdf.rect(bx4,20,bx6r-bx4,pdf.lastAutoTable.finalY-20); }
+  const fy=((pdf.lastAutoTable&&pdf.lastAutoTable.finalY)||20)+5;
+  pdf.setFont('NotoSansJP','normal'); pdf.setFontSize(7);
+  const note='金額は1個あたり（単価）。仕切(込)＝請求金額÷数量。太枠＝税抜／薄グレー＝税込。合計：税抜 '+y(sumGoukei)+'・税込 '+y(sumKomiTotal)+'（税込は請求書合計と一致）。税抜＝税込÷'+rate.toFixed(2)+'（四捨五入）。レス率＝仕切÷定価−1。';
+  pdf.text(note, margin, fy, {maxWidth:pageW-margin*2});
+  pdf.save('税抜計算表_'+(d.sharyo||'parts')+'.pdf');
 }
 
 /* 起動 */
