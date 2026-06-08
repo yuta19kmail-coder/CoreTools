@@ -87,7 +87,7 @@
 
 <div id="app">
   <div id="topbar">
-    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.4.1</span></div>
+    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.4.2</span></div>
     <span class="dev-badge">🚧 開発中サンプル</span>
     <div class="spacer"></div>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
@@ -497,9 +497,9 @@ async function partsMakePdf(d){
 function snum(s){ return parseInt(String(s).replace(/,/g,''),10)||0; }
 function renderSales(){
   document.getElementById('main').innerHTML=
-    '<div class="thead"><div class="ttitle">📋 売上チェック</div><div class="tsub">売上チェックリストPDFを入れると、怪しい行に白黒の下線を引いた原本PDFを作って保存します</div></div>'
+    '<div class="thead"><div class="ttitle">📋 売上チェック</div><div class="tsub">売上チェックリストPDFを入れると、怪しい行に白黒のマーク（金額に線／見出しに網掛け）を付けた原本PDFを作って保存します</div></div>'
     +'<div class="wrap">'
-    +'<div class="card" style="font-size:12px;line-height:2">マークする内容：<b style="color:#c0392b">■ 赤字</b>（部品で原価＞売価）／<b style="color:#c97a00">■ 原価ほぼ0</b>（部品で原価が売価の5%未満・付け忘れ疑い）／<b style="color:#9a8700">■ 受付担当 空欄</b>の伝票。作業（工賃）は原価0が普通なので原価チェックの対象外です。</div>'
+    +'<div class="card" style="font-size:12px;line-height:2">マークする内容：<b style="color:#c0392b">■ 赤字</b>（部品で原価＞売価）＝<b>金額の下に太い実線</b>／<b style="color:#c97a00">■ 原価ほぼ0</b>（部品で原価が売価の5%未満・付け忘れ疑い）＝<b>金額の下に破線</b>／<b style="color:#9a8700">■ 受付担当 空欄</b>の伝票＝<b>見出しにグレーの網掛け</b>。作業（工賃）は原価0が普通なので原価チェックの対象外です。</div>'
     +'<div class="card" id="sales-drop" style="text-align:center;cursor:pointer;border-style:dashed"'
     +' ondragover="event.preventDefault();this.style.borderColor=\'var(--acc2)\'" ondragleave="this.style.borderColor=\'\'"'
     +' ondrop="salesOnDrop(event)" onclick="document.getElementById(\'sales-file\').click()">'
@@ -527,19 +527,28 @@ async function salesProcess(file){
       var items=tc.items.map(function(it){ var q=lib.Util.applyTransform([it.transform[4],it.transform[5]], vp.transform); return {x:Math.round(q[0]),y:Math.round(q[1]),s:it.str}; }).filter(function(o){return o.s.trim()!=='';});
       items.sort(function(a,b){return (a.y-b.y)||(a.x-b.x);});
       var rows=[],c=null,ly=null; items.forEach(function(o){ if(ly===null||Math.abs(o.y-ly)>4){c=[];rows.push(c);} c.push(o); ly=o.y; });
-      // 視覚座標(vx,vy)を媒体座標へ戻して下線レコードを作る（pi=ページindex）
+      // 視覚座標(vx,vy)を媒体座標へ戻してマークレコードを作る（pi=ページindex）
       var pageIdx=p-1, curVp=vp;
-      var pushUnder=function(vx1,vx2,vy,style){
-        var a=lib.Util.applyInverseTransform([vx1,vy], curVp.transform);
-        var b=lib.Util.applyInverseTransform([vx2,vy], curVp.transform);
-        marks.push({pi:pageIdx, x1:a[0],y1:a[1], x2:b[0],y2:b[1], style:style});
+      var toMedia=function(vx,vy){ return lib.Util.applyInverseTransform([vx,vy], curVp.transform); };
+      var pushUnder=function(vx1,vx2,vy,style){ // 下線（媒体座標）
+        var a=toMedia(vx1,vy), b=toMedia(vx2,vy);
+        marks.push({kind:'line', pi:pageIdx, x1:a[0],y1:a[1], x2:b[0],y2:b[1], style:style});
+      };
+      var pushHi=function(vx1,vx2,vyc,th,style){ // 網掛け（半透明の太線でテキスト背面を塗る）
+        var a=toMedia(vx1,vyc), b=toMedia(vx2,vyc);
+        marks.push({kind:'hi', pi:pageIdx, x1:a[0],y1:a[1], x2:b[0],y2:b[1], th:th, style:style});
       };
       rows.forEach(function(r){ r.sort(function(a,b){return a.x-b.x;}); var txt=r.map(function(o){return o.s;}).join(' ');
         var ys=r.map(function(o){return o.y;}); var by=Math.max.apply(null,ys)+5; // 行の下端＋少し下
+        var cy=(Math.min.apply(null,ys)+Math.max.apply(null,ys))/2-4;            // 文字の中心（網掛け用）
         if(/^令和/.test(r[0].s) && /個人|法人/.test(txt)){
           tickets++; cur=true;
           var uke=r.filter(function(o){return o.x>=545;}).map(function(o){return o.s;}).join('').trim();
-          if(!uke){ ukeE++; pushUnder(28, 800, by, 'uke'); } // 受付未入力＝伝票見出し行に下線
+          if(!uke){ ukeE++; // 受付未入力＝伝票見出し行をグレーの網掛けでマーク
+            var xs=r.map(function(o){return o.x;});
+            var hx1=Math.min.apply(null,xs)-4, hx2=Math.max(720, Math.max.apply(null,xs)+20);
+            pushHi(hx1, hx2, cy, 13, 'uke');
+          }
           return;
         }
         if(!cur) return;
@@ -549,7 +558,10 @@ async function salesProcess(file){
             var amt=snum(nums[2].s), cost=snum(nums[3].s), fl='';
             if(cost>amt && amt>0){ fl='aka'; aka++; }
             else if(amt>=1000 && (cost===0||cost<amt*0.05)){ fl='g0'; g0++; }
-            if(fl){ pushUnder(58, 800, by, fl); }
+            if(fl){ // 金額セルの下だけに線を引く（行全体ではない）
+              var ax1=nums[2].x-4, ax2=Math.max(nums[3].x-8, nums[2].x+30);
+              pushUnder(ax1, ax2, by, fl);
+            }
           }
         }
       });
@@ -558,18 +570,21 @@ async function salesProcess(file){
     await salesAnnotate(srcBytes, marks, {aka:aka,g0:g0,ukeE:ukeE,tickets:tickets,parts:parts}, file.name);
   }catch(e){ console.error('[sales]',e); salesSay('処理でエラーが出ました。もう一度お試しください。', true); }
 }
-/* 原本PDFに白黒の下線を引いてダウンロード（pdf-lib）＝赤字:太い実線／原価ほぼ0:点線／受付未入力:見出し下線 */
+/* 原本PDFに白黒のマークを書き込んでダウンロード（pdf-lib）＝赤字:金額下に太い実線／原価ほぼ0:金額下に破線／受付未入力:見出しにグレー網掛け */
 async function salesAnnotate(srcBytes, marks, cnt, srcName){
-  salesSay('🖊 原本に下線を書き込み中…');
-  var PL=window.PDFLib, rgb=PL.rgb, black=rgb(0,0,0);
+  salesSay('🖊 原本にマークを書き込み中…');
+  var PL=window.PDFLib, rgb=PL.rgb, black=rgb(0,0,0), gray=rgb(0.55,0.55,0.55);
   var doc=await PL.PDFDocument.load(srcBytes);
   var pages=doc.getPages();
   marks.forEach(function(m){
     var pg=pages[m.pi]; if(!pg)return;
+    if(m.kind==='hi'){ // 受付未入力＝グレーの網掛け（半透明の太線でテキスト背面を塗る）
+      pg.drawLine({ start:{x:m.x1,y:m.y1}, end:{x:m.x2,y:m.y2}, thickness:(m.th||13), color:gray, opacity:0.32 });
+      return;
+    }
     var o={ start:{x:m.x1,y:m.y1}, end:{x:m.x2,y:m.y2}, color:black };
-    if(m.style==='aka'){ o.thickness=2.0; }                       // 赤字＝太い実線
-    else if(m.style==='g0'){ o.thickness=0.9; o.dashArray=[3,2]; } // 原価ほぼ0＝点線
-    else { o.thickness=1.2; }                                     // 受付未入力＝見出しに実線
+    if(m.style==='aka'){ o.thickness=2.0; }                       // 赤字＝金額下に太い実線
+    else { o.thickness=1.0; o.dashArray=[3,2]; }                  // 原価ほぼ0＝金額下に破線
     pg.drawLine(o);
   });
   var bytes=await doc.save();
@@ -577,12 +592,12 @@ async function salesAnnotate(srcBytes, marks, cnt, srcName){
   var blob=new Blob([bytes],{type:'application/pdf'}); var url=URL.createObjectURL(blob);
   var a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-  salesSay('✅ チェック完了：原本PDFに白黒の下線でマークしてダウンロードしました（全'+cnt.tickets+'伝票・部品'+cnt.parts+'行）。'
+  salesSay('✅ チェック完了：原本PDFに白黒のマークを付けてダウンロードしました（全'+cnt.tickets+'伝票・部品'+cnt.parts+'行）。'
     +'<div style="margin-top:8px;font-size:13px;line-height:1.9">'
-    +'<b>下線の見かた</b><br>'
-    +'━━ <b>太い実線</b>＝🔴赤字（原価＞売価）… <b>'+cnt.aka+'</b>件<br>'
-    +'– – <b>点線</b>＝🟠原価ほぼ0（金額1000以上で原価が5%未満 or 0＝付け忘れ疑い）… <b>'+cnt.g0+'</b>件<br>'
-    +'── <b>見出しの下線</b>＝🟡受付担当が未入力の伝票… <b>'+cnt.ukeE+'</b>伝票'
+    +'<b>マークの見かた</b><br>'
+    +'━━ <b>太い実線</b>（金額の下）＝🔴赤字（原価＞売価）… <b>'+cnt.aka+'</b>件<br>'
+    +'– – <b>破線</b>（金額の下）＝🟠原価ほぼ0（金額1000以上で原価が5%未満 or 0＝付け忘れ疑い）… <b>'+cnt.g0+'</b>件<br>'
+    +'▒▒ <b>グレーの網掛け</b>（伝票見出し）＝🟡受付担当が未入力の伝票… <b>'+cnt.ukeE+'</b>伝票'
     +'</div>');
 }
 
