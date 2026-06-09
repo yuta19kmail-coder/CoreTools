@@ -80,14 +80,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<!-- 元PDFへの注釈書き込み（pdf-lib）：売上チェックツール用＝原本に白黒の下線を引く -->
+<!-- 元PDFへの注釈書き込み（pdf-lib）：売上チェック／参考見積ツール用＝原本に直接マーク・白塗り -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<!-- pdf-libに日本語フォントを埋め込むためのfontkit（window.fontkit）：参考見積ツール用 -->
+<script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<!-- 参考見積ツール用 極小日本語フォント（base64・事前最小化済み） -->
+<script src="js/sample-quote-font.js?v=1"></script>
 </head>
 <body>
 
 <div id="app">
   <div id="topbar">
-    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.4.2</span></div>
+    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.5.0</span></div>
     <span class="dev-badge">🚧 開発中サンプル</span>
     <div class="spacer"></div>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
@@ -99,6 +103,7 @@
     <div class="si" data-tool="wareki" onclick="showTool('wareki')"><span>📅</span><span>和暦⇔西暦</span></div>
     <div class="si" data-tool="parts" onclick="showTool('parts')"><span>🧾</span><span>パーツ税抜計算</span></div>
     <div class="si" data-tool="sales" onclick="showTool('sales')"><span>📋</span><span>売上チェック</span></div>
+    <div class="si" data-tool="sample" onclick="showTool('sample')"><span>📄</span><span>参考見積作成</span></div>
     <div class="sg">準備中</div>
     <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
 
@@ -123,6 +128,7 @@ function showTool(id){
   if (id === 'wareki') renderWareki();
   if (id === 'parts')  renderParts();
   if (id === 'sales')  renderSales();
+  if (id === 'sample') renderSample();
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
 function fmt(n){
@@ -599,6 +605,137 @@ async function salesAnnotate(srcBytes, marks, cnt, srcName){
     +'– – <b>破線</b>（金額の下）＝🟠原価ほぼ0（金額1000以上で原価が5%未満 or 0＝付け忘れ疑い）… <b>'+cnt.g0+'</b>件<br>'
     +'▒▒ <b>グレーの網掛け</b>（伝票見出し）＝🟡受付担当が未入力の伝票… <b>'+cnt.ukeE+'</b>伝票'
     +'</div>');
+}
+
+/* ===================== ⑤ 参考見積作成（見積書PDF → お客様情報を消した参考見積PDF） ===================== */
+/* 整備ソフトの見積書PDF（固定フォーマット・A4縦・回転なし）をドラッグ →
+   お客様の個人情報（氏名/住所/連絡先）と車両の個体情報（登録番号/受付・メカ担当/初度/類別番号/次回車検日/車台番号/車輌管理No）を白で塗りつぶし、
+   左上に「参考見積」スタンプ＋注記、下部の入金確認の案内を削除した参考見積PDF（ベクター）を即ダウンロード。
+   ※白塗り方式：見た目は完全に消えるが、PDFの隠れた文字データは残りうる（社外配布は内容を一度確認）。
+   ※日本語は pdf-lib のサブセッタが壊すため、必要文字だけの極小フォント(js/sample-quote-font.js)を subset:false で埋め込む。 */
+function renderSample(){
+  document.getElementById('main').innerHTML =
+    '<div class="thead"><div class="ttitle">📄 参考見積作成</div><div class="tsub">見積書PDFを入れると、お客様情報を消した「参考見積」PDFを作って保存します</div></div>'
+    +'<div class="wrap">'
+    +'<div class="card" style="font-size:12px;line-height:1.9"><b>消すもの</b>：お客様の氏名・住所・連絡先／登録番号・受付/メカ担当・初度・類別番号・次回車検日・車台番号・車輌管理No／下部の入金確認の案内。<br><b>残すもの</b>：車名・型式・原動機型式・コード・明細・金額。左上に「参考見積」スタンプと注記を入れます。</div>'
+    +'<div class="card" id="sample-drop" style="text-align:center;cursor:pointer;border-style:dashed"'
+    +' ondragover="event.preventDefault();this.style.borderColor=\'var(--acc2)\'" ondragleave="this.style.borderColor=\'\'"'
+    +' ondrop="sampleOnDrop(event)" onclick="document.getElementById(\'sample-file\').click()">'
+    +'<input type="file" id="sample-file" accept="application/pdf" multiple style="display:none" onchange="sampleOnPick(this)">'
+    +'<div style="font-size:30px">📄✨</div><div style="font-size:15px;font-weight:700;margin-top:8px">見積書PDFを ここにドラッグ、またはクリックして選ぶ</div>'
+    +'<div class="hint" style="margin-top:6px">入れると自動で参考見積PDFを作ってダウンロードします（複数まとめてもOK）。ファイルはPCから外に出ません。</div></div>'
+    +'<div id="sample-result"></div></div>';
+}
+function sampleOnDrop(ev){ ev.preventDefault(); var el=document.getElementById('sample-drop'); if(el)el.style.borderColor=''; var fs=[].slice.call(ev.dataTransfer&&ev.dataTransfer.files||[]).filter(function(x){return /\.pdf$/i.test(x.name)||x.type==='application/pdf';}); if(fs.length)sampleProcess(fs); else sampleSay('PDFファイルを入れてください', true); }
+function sampleOnPick(input){ var fs=[].slice.call(input.files||[]); if(fs.length)sampleProcess(fs); input.value=''; }
+function sampleSay(html,isErr){ var r=document.getElementById('sample-result'); if(!r)return; r.innerHTML='<div class="card" style="'+(isErr?'border-color:#b4543c;':'')+'">'+html+'</div>'; }
+/* 極小日本語フォントの bytes（base64→Uint8Array） */
+function sqFontBytes(){ var b=atob(window.SQ_FONT_B64), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+
+async function sampleProcess(files){
+  if(!window.pdfjsLib){ sampleSay('PDF読み取り部品が読めていません（再読み込みしてください）', true); return; }
+  if(!window.PDFLib){ sampleSay('PDF書き込み部品が読めていません（再読み込みしてください）', true); return; }
+  if(!window.fontkit){ sampleSay('フォント部品が読めていません（再読み込みしてください）', true); return; }
+  if(!window.SQ_FONT_B64){ sampleSay('フォントデータが読めていません（再読み込みしてください）', true); return; }
+  sampleSay('📄 読み取り中…');
+  for(var fi=0; fi<files.length; fi++){
+    var f=files[fi];
+    try{
+      var info=await sampleAnalyze(f);
+      if(!info.ok){ sampleSay('「'+f.name+'」は見積書の形式として読み取れませんでした。整備ソフトの見積書PDF（A4縦）か確認してください。', true); continue; }
+      await sampleBuild(info.srcBytes, info, f.name);
+      sampleSay('✅ <b>'+ f.name +'</b>：お客様情報を消した参考見積PDFを作ってダウンロードしました。'
+        +'<div class="hint" style="margin-top:6px">左上に「参考見積」スタンプ＋注記を入れ、下部の入金確認の案内を削除しました。'
+        + (info.code? ' コード '+info.code+' は残しています。':'') + '</div>');
+    }catch(e){ console.error('[sample]',e); sampleSay('「'+f.name+'」の処理でエラーが出ました。もう一度お試しください。', true); }
+  }
+}
+
+/* pdf.jsで全ページの視覚座標テキストを取得→フォーマット判定＋コード値＋各ページのヘッダー有無/入金確認ブロックy範囲を拾う
+   （このフォーマットは複数ページのとき各ページに顧客ヘッダーと入金確認ブロックが繰り返されるため、全ページを個別処理する） */
+async function sampleAnalyze(file){
+  var lib=window.pdfjsLib;
+  lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var buf=await file.arrayBuffer();
+  var srcBytes=buf.slice(0); // pdf-lib用にコピー（pdf.jsがbufを消費し得るため）
+  var pdf=await lib.getDocument({data:buf, cMapUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked:true}).promise;
+  var rePhrase=/入金確認|京葉銀行|常盤平|口座名義|振込手数料|恐れ入り|No2827531/;
+  var code='', okAny=false, pages=[];
+  for(var p=1;p<=pdf.numPages;p++){
+    var page=await pdf.getPage(p);
+    var vp=page.getViewport({scale:1});
+    var rot=((vp.rotation||0)%360+360)%360;
+    var tc=await page.getTextContent();
+    var items=tc.items.map(function(it){ var q=lib.Util.applyTransform([it.transform[4],it.transform[5]], vp.transform); return {x:q[0], y:q[1], s:it.str}; }).filter(function(o){return o.s.trim()!=='';});
+    var all=items.map(function(o){return o.s;}).join('');
+    // このページに顧客ヘッダー（登録番号〜車輌管理No）があるか
+    var hasHeader = (rot===0) && /登録番号/.test(all) && /車輌管理No/.test(all);
+    if(hasHeader && /見積書/.test(all)) okAny=true;
+    // コード値（最初に見つけたページの値を全ページに使う）
+    if(!code){
+      for(var i=0;i<items.length;i++){
+        if(/コード/.test(items[i].s)){
+          var m=items[i].s.match(/コード\s*([0-9A-Za-z\-]+)/);
+          if(m){ code=m[1]; }
+          else { var yy=items[i].y, xx=items[i].x;
+            var cand=items.filter(function(o){return Math.abs(o.y-yy)<6 && o.x>xx+10 && o.x<260 && /[0-9A-Za-z]/.test(o.s);}).sort(function(a,b){return a.x-b.x;});
+            if(cand.length) code=cand[0].s.trim();
+          }
+          break;
+        }
+      }
+    }
+    // このページの入金確認ブロックのy範囲（ベースライン基準・社名単独行は割らない）
+    var bb0=null, bb1=null;
+    items.forEach(function(o){ if(rePhrase.test(o.s)){ if(bb0===null||o.y<bb0)bb0=o.y; if(bb1===null||o.y>bb1)bb1=o.y; } });
+    var bank = (bb0!==null) ? {y0:bb0-9.5, y1:bb1+3} : null;
+    pages.push({hasHeader:hasHeader, bank:bank});
+  }
+  return {ok:okAny, srcBytes:srcBytes, code:code, pages:pages};
+}
+
+/* pdf-libで白塗り＋左上デザイン＋入金確認ブロック削除し、ベクターPDFを即DL */
+async function sampleBuild(srcBytes, info, srcName){
+  sampleSay('🖊 参考見積を作成中…');
+  var PL=window.PDFLib, rgb=PL.rgb, W=rgb(1,1,1), B=rgb(0,0,0);
+  var doc=await PL.PDFDocument.load(srcBytes);
+  doc.registerFontkit(window.fontkit);
+  var font=await doc.embedFont(sqFontBytes(), {subset:false}); // 事前最小化済み＝subsetしない（pdf-libのsubsetは日本語が壊れる）
+  var pages=doc.getPages();
+  // 全ページを個別処理（複数ページのとき各ページに顧客ヘッダー＋入金確認ブロックが繰り返されるため）
+  pages.forEach(function(pg, idx){
+    var meta=(info.pages && info.pages[idx]) || {};
+    var H=pg.getHeight();
+    // 視覚座標(左上原点)→媒体座標(左下原点)・回転なし前提 y'=H-y
+    function wr(x0,y0,x1,y1){ pg.drawRectangle({x:x0, y:H-y1, width:x1-x0, height:y1-y0, color:W}); }
+    // ③ 下部の入金確認ブロック（社名は残す・箱の左罫線x15.5を避けてx16.2開始）
+    if(meta.bank){ wr(16.2, meta.bank.y0, 216, meta.bank.y1); }
+    // 顧客ヘッダーのあるページだけ白塗り＋左上デザインを適用
+    if(meta.hasHeader){
+      // ① お客様情報ストリップ＋氏名下線のTEL側残り
+      wr(12,15,280,167);
+      wr(278,101,292,112);
+      // ② 車両情報ボックス内の個体情報セル（ラベル・残す値・罫線は避けた範囲）
+      [[66,174,176,187],[66,189,176,202],[66,203.5,176,217],[66,233,176,247],
+       [244,189,331,202],[244,218,331,231],[384,203.5,476,217],[244,233,331,247]].forEach(function(c){ wr(c[0],c[1],c[2],c[3]); });
+      // ④ 左上デザイン枠
+      pg.drawRectangle({x:20, y:H-150, width:258, height:128, borderColor:B, borderWidth:1.1});
+      pg.drawRectangle({x:20, y:H-52, width:258, height:30, color:B});
+      var title='参 考 見 積', ts=17, tw=font.widthOfTextAtSize(title, ts);
+      pg.drawText(title, {x:20+(258-tw)/2, y:H-44, size:ts, font:font, color:W});
+      ['同型車による参考見積です。','金額は車両の状態や時期により','変動する場合がございます。','予めご了承ください。']
+        .forEach(function(s,i){ pg.drawText(s, {x:31, y:H-(67+i*10.8), size:8.3, font:font, color:B}); });
+      pg.drawLine({start:{x:28,y:H-126}, end:{x:270,y:H-126}, thickness:0.4, color:B});
+      pg.drawText('コード', {x:31, y:H-142, size:9.5, font:font, color:B});
+      if(info.code){ pg.drawText(info.code, {x:78, y:H-142, size:9.5, font:font, color:B}); }
+    }
+  });
+  // 保存＆ダウンロード
+  var bytes=await doc.save();
+  var name=(srcName||'見積書.pdf').replace(/\.pdf$/i,'')+'_参考見積.pdf';
+  var blob=new Blob([bytes],{type:'application/pdf'}); var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
 }
 
 /* 起動 */
