@@ -91,7 +91,7 @@
 
 <div id="app">
   <div id="topbar">
-    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.5.0</span></div>
+    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.6.0</span></div>
     <span class="dev-badge">🚧 開発中サンプル</span>
     <div class="spacer"></div>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
@@ -104,6 +104,8 @@
     <div class="si" data-tool="parts" onclick="showTool('parts')"><span>🧾</span><span>パーツ税抜計算</span></div>
     <div class="si" data-tool="sales" onclick="showTool('sales')"><span>📋</span><span>売上チェック</span></div>
     <div class="si" data-tool="sample" onclick="showTool('sample')"><span>📄</span><span>参考見積作成</span></div>
+    <div class="sg">練習・その他</div>
+    <div class="si" data-tool="typing" onclick="showTool('typing')"><span>⌨️</span><span>タイピング練習</span></div>
     <div class="sg">準備中</div>
     <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
 
@@ -129,6 +131,15 @@ function showTool(id){
   if (id === 'parts')  renderParts();
   if (id === 'sales')  renderSales();
   if (id === 'sample') renderSample();
+  if (id === 'typing') renderTyping();
+}
+/* ===================== ⌨ タイピング練習（PitType を iframe で内包） ===================== */
+function renderTyping(){
+  document.getElementById('main').innerHTML =
+    '<div class="thead"><div class="ttitle">⌨️ タイピング練習</div>'
+    + '<div class="tsub">小林モータースの専門用語でタッチタイピング（練習＝流れるローマ字／本番＝変換してEnter）</div></div>'
+    + '<iframe src="typing.html?v=1" title="PitType タイピング練習" allow="autoplay" '
+    + 'style="width:100%;height:calc(100vh - 150px);min-height:480px;border:1px solid var(--border);border-radius:12px;margin-top:10px;background:#0e1116;display:block"></iframe>';
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
 function fmt(n){
