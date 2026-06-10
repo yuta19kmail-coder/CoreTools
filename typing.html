@@ -76,7 +76,7 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .finish{position:absolute;left:80px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,var(--blue),transparent);opacity:.55}
 .finish::before{content:"PIT";position:absolute;top:8px;left:-9px;font-size:10px;font-weight:800;color:var(--blue);letter-spacing:.1em;writing-mode:vertical-rl}
 .flycar{position:absolute;top:50%;font-size:28px;transform:translateY(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
-.wc{position:absolute;top:50%;transform:translateY(-50%);background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-left:4px solid var(--muted);border-radius:12px;padding:9px 13px;max-width:60%;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:opacity .25s,transform .25s}
+.wc{position:absolute;top:50%;transform:translateY(-50%);background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-left:4px solid var(--muted);border-radius:12px;padding:9px 13px;width:max-content;max-width:46%;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:opacity .25s,transform .25s}
 .wc .cat{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:var(--muted);text-transform:uppercase}
 .wc .jp{font-size:16px;font-weight:800;margin-top:1px;line-height:1.3}
 .wc.kokusan{border-left-color:var(--kokusan)} .wc.yunyu{border-left-color:var(--yunyu)}
@@ -132,9 +132,146 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .btn2{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:12px;padding:12px 24px;font-size:15px;font-weight:800;cursor:pointer;transition:.14s}
 .btn2:hover{border-color:var(--blue)} .btn2.primary{background:linear-gradient(180deg,var(--blue),var(--blue2));border:none}
 .countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:800;color:var(--blue);text-shadow:0 0 40px rgba(55,138,221,.6);z-index:20;background:rgba(8,11,16,.6)}
+.countdown span{display:inline-block;animation:cdpop .7s ease-out}
+@keyframes cdpop{0%{transform:scale(2.2);opacity:0}30%{transform:scale(1);opacity:1}100%{transform:scale(.7);opacity:.2}}
+
+/* ===== sound button (topbar) ===== */
+.sndbtn{background:var(--panel);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;font-size:15px;cursor:pointer;color:var(--text)}
+.sndbtn:hover{border-color:var(--blue)} .sndbtn.muted{opacity:.5}
+
+/* ===== beginner hands panel ===== */
+.hands{margin-top:11px;border:1px solid var(--border);background:linear-gradient(180deg,var(--panel),var(--bg2));border-radius:14px;padding:8px 10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hands.off{display:none}
+.hands-svg{width:min(560px,96%);height:auto;display:block}
+.hands .hlabel{font-size:11px;color:var(--muted);font-weight:700}
+.hands .hlabel b{color:var(--blue)}
+.finger{transition:transform .12s,opacity .12s;transform-origin:center bottom;opacity:.78}
+.finger .fpad{transition:fill .12s,filter .12s}
+.finger.lit{opacity:1}
+.finger.lit .fpad{filter:drop-shadow(0 0 7px currentColor)}
+.finger.lit{animation:fingerPress .4s ease}
+@keyframes fingerPress{0%,100%{transform:translateY(0)}40%{transform:translateY(7px)}}
+.palm{fill:#1d2533;stroke:#2c374a;stroke-width:1.5}
+
+/* ===== key press flash ===== */
+.key.press{animation:keyPress .16s ease}
+@keyframes keyPress{0%{transform:translateY(0)}45%{transform:translateY(3px);filter:brightness(1.6)}100%{transform:translateY(0)}}
+
+/* ===== fx layer: particles / popups ===== */
+.fxlayer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:8}
+.particle{position:absolute;width:9px;height:9px;border-radius:2px;will-change:transform,opacity}
+.scorepop{position:absolute;font-size:20px;font-weight:800;color:var(--amber);text-shadow:0 2px 8px rgba(0,0,0,.6);white-space:nowrap;will-change:transform,opacity}
+.scorepop.big{font-size:27px;color:#ffd76b}
+.smoke{position:absolute;font-size:26px;will-change:transform,opacity}
+
+/* ===== combo banner ===== */
+.combobanner{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%) scale(.6);opacity:0;font-size:40px;font-weight:800;color:#fff;text-shadow:0 0 22px var(--amber),0 4px 12px rgba(0,0,0,.6);pointer-events:none;z-index:12;letter-spacing:.02em;white-space:nowrap}
+.combobanner.show{animation:comboShow 1s ease-out}
+@keyframes comboShow{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-90%) scale(.9);opacity:0}}
+
+/* ===== screen flash (miss / combo) ===== */
+.flash{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0}
+.flash.miss{background:radial-gradient(circle at 50% 50%,transparent 40%,rgba(239,83,80,.45) 100%);animation:flashMiss .42s ease-out}
+.flash.good{background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(29,185,122,.30) 100%);animation:flashGood .4s ease-out}
+@keyframes flashMiss{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@keyframes flashGood{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
+.bigshake{animation:bigshk .34s}@keyframes bigshk{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-3px)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-1px)}}
+
+/* ===== active card pulse ===== */
+.wc.active{animation:cardPulse 1.1s ease-in-out infinite}
+@keyframes cardPulse{0%,100%{box-shadow:0 0 0 2px var(--blue),0 14px 30px rgba(37,99,235,.35)}50%{box-shadow:0 0 0 2px var(--blue),0 0 26px rgba(55,138,221,.7),0 14px 30px rgba(37,99,235,.35)}}
+
+/* ===== combo flame on stat ===== */
+.stat .v.combo.hot{color:#ff8a3d;text-shadow:0 0 14px rgba(255,138,61,.8)}
+
+/* ===== rank reveal ===== */
+.rank.reveal{animation:rankIn .7s cubic-bezier(.2,1.3,.4,1)}
+@keyframes rankIn{0%{transform:scale(0) rotate(-18deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.rank.S{background:linear-gradient(180deg,#fff,#ffd76b 60%,#f5b73d);-webkit-background-clip:text;background-clip:text}
+.confetti{position:fixed;width:10px;height:14px;z-index:45;pointer-events:none;will-change:transform}
+
+/* ===== mode/diff for beginner ===== */
+.diff.beginner.on{border-color:var(--green);background:rgba(29,185,122,.14);box-shadow:0 0 0 1px var(--green) inset}
+.bigtoggle{display:flex;align-items:center;gap:10px;margin-top:14px;justify-content:center;background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;width:min(720px,94vw);margin-left:auto;margin-right:auto}
+.bigtoggle .bt-l{flex:1;text-align:left} .bigtoggle .bt-l b{font-size:15px} .bigtoggle .bt-l small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.bigtoggle.on{border-color:var(--green);background:rgba(29,185,122,.12)}
+
+/* ============ GAME POLISH（ビジュアル強化） ============ */
+/* 背景：流れる斜めライン＋ピット床グリッド＋ビネット */
+.bg-deco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-deco::before{content:"";position:absolute;inset:-25%;background:repeating-linear-gradient(118deg,transparent 0 64px,rgba(55,138,221,.045) 64px 66px);animation:bgslide 16s linear infinite}
+.bg-deco::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 60%,rgba(0,0,0,.35)),radial-gradient(900px 420px at 50% 8%,rgba(55,138,221,.10),transparent 70%)}
+@keyframes bgslide{to{transform:translateX(-66px)}}
+.bg-vignette{position:fixed;inset:0;z-index:31;pointer-events:none;box-shadow:inset 0 0 200px rgba(0,0,0,.55)}
+.wrap{position:relative;z-index:1}
+
+/* ヒーロー（PitType ロゴ） */
+.herowrap{display:flex;flex-direction:column;align-items:center}
+.herologo{font-size:62px;font-weight:800;line-height:1;letter-spacing:-.01em;display:inline-flex;align-items:center;gap:10px;
+  filter:drop-shadow(0 6px 26px rgba(37,99,235,.45));animation:heroFloat 3.6s ease-in-out infinite}
+.herologo .pit{background:linear-gradient(180deg,#7fc0ff,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.herologo .wr{color:#fff}
+.herologo .wrench{font-size:46px;filter:drop-shadow(0 0 16px rgba(55,138,221,.7));animation:wrenchSpin 6s ease-in-out infinite}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes wrenchSpin{0%,70%,100%{transform:rotate(0)}80%{transform:rotate(-22deg)}90%{transform:rotate(14deg)}}
+.herosub{margin-top:6px;font-size:13px;font-weight:700;letter-spacing:.18em;color:var(--blue);text-transform:uppercase}
+
+/* モード/難易度カードをゲームUIに */
+.mode{position:relative;overflow:hidden}
+.mode::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%);transform:translateX(-120%);transition:.5s}
+.mode:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.4)}
+.mode:hover::after{transform:translateX(120%)}
+.mode.on{box-shadow:0 0 0 1px var(--blue) inset,0 10px 26px rgba(37,99,235,.32)}
+.mode .nm{font-size:17px}
+.diff{position:relative;transition:.16s}
+.diff:hover{transform:translateY(-2px)}
+.diff.on{box-shadow:0 0 0 1px var(--blue) inset,0 8px 18px rgba(37,99,235,.3)}
+.startbtn{position:relative;letter-spacing:.04em;animation:btnGlow 2.2s ease-in-out infinite}
+@keyframes btnGlow{0%,100%{box-shadow:0 12px 30px rgba(37,99,235,.4)}50%{box-shadow:0 12px 38px rgba(37,99,235,.7),0 0 0 3px rgba(55,138,221,.25)}}
+.startbtn:hover{transform:translateY(-3px) scale(1.02);animation:none;box-shadow:0 16px 40px rgba(37,99,235,.7)}
+
+/* HUDピル */
+.pill{backdrop-filter:blur(3px);background:rgba(22,28,39,.82)}
+.pill .yen{text-shadow:0 0 10px rgba(245,183,61,.5)}
+
+/* レーン：コンベア（床）を動かして疾走感＋チェッカーのPITゲート */
+.lanewrap{animation:belt 1.7s linear infinite;box-shadow:inset 0 14px 30px rgba(0,0,0,.45),inset 0 -14px 30px rgba(0,0,0,.45)}
+@keyframes belt{to{background-position:-76px 0}}
+.finish{width:14px;background:repeating-linear-gradient(45deg,#e8eef6 0 7px,#0e1116 7px 14px),linear-gradient(180deg,transparent,var(--blue),transparent);opacity:.5;mix-blend-mode:screen}
+.beltline.t,.beltline.b{background:linear-gradient(90deg,transparent,rgba(55,138,221,.5),transparent)}
+
+/* 走行カードを立体的に */
+.wc{backdrop-filter:blur(2px)}
+.wc .cat{opacity:.85}
+.wc.kokusan{box-shadow:0 8px 22px rgba(0,0,0,.4),-3px 0 12px -3px var(--kokusan)}
+.wc.yunyu{box-shadow:0 8px 22px rgba(0,0,0,.4),-3px 0 12px -3px var(--yunyu)}
+
+/* タイプパネル（現在の単語）をコックピット風に */
+.typepanel{background:linear-gradient(180deg,#141b27,#0d121b);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 26px rgba(0,0,0,.4);position:relative}
+.typepanel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--blue),transparent);border-radius:14px 0 0 14px}
+.tp-romaji .cur{text-shadow:0 0 12px rgba(55,138,221,.6)}
+
+/* スタッツをメーター風に */
+.stat{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),#10141c)}
+.stat::before{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.5}
+.stat .v{text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.stat .v.combo{transition:transform .12s}
+.stat .v.combo.hot{transform:scale(1.12)}
+
+/* キーボードガイドを基板っぽく */
+.kbd{background:linear-gradient(180deg,#141b27,#0e131c);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.key.next{animation:keyNextPulse 1s ease-in-out infinite}
+@keyframes keyNextPulse{0%,100%{box-shadow:0 0 12px rgba(55,138,221,.7)}50%{box-shadow:0 0 20px rgba(55,138,221,1)}}
+
+/* リザルトのランクに後光 */
+#result .rank{position:relative}
+#result .rank::after{content:"";position:absolute;left:50%;top:50%;width:200px;height:200px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(55,138,221,.35),transparent 65%);z-index:-1;animation:halo 2.4s ease-in-out infinite}
+@keyframes halo{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.9)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
 </style>
 </head>
 <body>
+<div class="bg-deco"></div>
+<div class="bg-vignette"></div>
 <div class="wrap">
   <div class="topbar">
     <div class="logo"><span>🔧</span><span><span class="pit">Pit</span>Type</span><span class="sub">整備士タイピング</span></div>
@@ -142,13 +279,17 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
     <div class="pill" id="modePill"><span class="lbl" id="modePillL">モード</span><span id="modePillV">練習</span></div>
     <div class="pill"><span class="lbl" id="scoreL">売上</span><span class="yen" id="yen">¥0</span></div>
     <div class="pill"><span class="lbl">残り</span><span class="time" id="time">--</span></div>
+    <button class="sndbtn" id="sndBtn" title="音のオン/オフ">🔊</button>
     <button class="gear" id="gearBtn" title="設定">⚙</button>
   </div>
 
   <!-- START -->
   <div class="screen" id="start">
-    <div class="hero">小林モータースの<span class="pit">専門用語</span>でタイピング</div>
-    <div class="tag">車名・パーツ・症状・整備用語・登録用語・スタッフ名をミックスで出題。指の速さを鍛える「練習」と、変換まで含めた実務の「本番」。</div>
+    <div class="herowrap">
+      <div class="herologo"><span class="wrench">🔧</span><span class="pit">Pit</span><span class="wr">Type</span></div>
+      <div class="herosub">整備士タイピング</div>
+    </div>
+    <div class="tag">車名・パーツ・症状・整備用語・登録用語・お客様名（田中さん等）をミックスで出題。指の速さを鍛える「練習」と、変換まで含めた実務の「本番」。</div>
     <div class="card">
       <h3>モード</h3>
       <div class="modes" id="modes">
@@ -162,6 +303,10 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
         <div class="diff" data-diff="hard"><div class="nm">上級</div><div class="ds">長文</div></div>
       </div>
     </div>
+    <div class="bigtoggle" id="beginnerToggle">
+      <div class="bt-l"><b>🖐 初心者モード</b><small>両手のイラストで「どの指で押すか」を表示・ゆっくりの速度。タッチタイピングが初めての人向け。</small></div>
+      <div class="toggle" id="tgBeginner"><div class="kn"></div></div>
+    </div>
     <button class="startbtn" id="startBtn">▶ ピットイン</button>
     <div class="foot">し＝shi/si どちらでもOK・「ー」は - キー・英数字（F56/BMW）はShiftで大文字　／　⚙でキーボードガイドと「ん」設定</div>
   </div>
@@ -170,6 +315,8 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
   <div class="screen hidden" id="game">
     <div class="lanewrap" id="lane">
       <div class="laneglow"></div><div class="beltline t"></div><div class="beltline b"></div><div class="finish"></div>
+      <div class="fxlayer" id="fxLayer"></div>
+      <div class="combobanner" id="comboBanner"></div>
     </div>
     <div class="typepanel" id="typepanel">
       <div class="tp-idle" id="tpIdle">最初のクルマが来るまで待機中…</div>
@@ -185,6 +332,7 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
       <div class="stat"><div class="v miss" id="sMiss">0</div><div class="k">見逃し</div></div>
     </div>
     <div class="kbd" id="kbd"></div>
+    <div class="hands off" id="hands"></div>
   </div>
 
   <!-- HONBAN -->
@@ -218,6 +366,8 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
   </div>
 </div>
 
+<div class="flash" id="flash"></div>
+
 <!-- SETTINGS MODAL -->
 <div class="overlay hidden" id="setOverlay">
   <div class="modal">
@@ -230,6 +380,18 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
     <div class="setrow">
       <div class="l">フィンガーカラー<small>指ごとにキーを色分け</small></div>
       <div class="toggle on" id="tgFinger"><div class="kn"></div></div>
+    </div>
+    <div class="setrow">
+      <div class="l">🖐 初心者モード<small>両手のイラストで運指を表示・ゆっくり速度</small></div>
+      <div class="toggle" id="tgBeginner2"><div class="kn"></div></div>
+    </div>
+    <div class="setrow">
+      <div class="l">🎵 BGM<small>プレイ中の音楽</small></div>
+      <div class="toggle on" id="tgBgm"><div class="kn"></div></div>
+    </div>
+    <div class="setrow">
+      <div class="l">🔊 効果音<small>打鍵・成功・ミスなどの音</small></div>
+      <div class="toggle on" id="tgSfx"><div class="kn"></div></div>
     </div>
     <div class="setrow">
       <div class="l">「ん」の入力<small>標準＝n1回でOK ／ 厳格＝母音・な行・や行の前はnn必須（実践的）</small></div>
@@ -250,17 +412,21 @@ function buildSteps(yomiRaw,opts){opts=opts||{};const nStrict=!!opts.nStrict;con
 function matchTyped(steps,typed){let best='invalid';function dfs(si,pos){if(pos===typed.length){if(si===steps.length){best='complete';return 'complete';}if(best!=='complete')best='prefix';return 'prefix';}if(si===steps.length)return null;const rest=typed.slice(pos);let res=null;for(const opt of steps[si]){if(rest.length>=opt.length){if(rest.startsWith(opt)){const r=dfs(si+1,pos+opt.length);if(r==='complete'){best='complete';return 'complete';}if(r==='prefix'&&best!=='complete')best='prefix';if(r)res=r;}}else if(opt.startsWith(rest)){if(best!=='complete')best='prefix';res='prefix';}}return res;}dfs(0,0);return best;}
 function canonical(steps){return steps.map(s=>s[0]).join('');}
 function canonOf(s){return s[0];}
-function greedy(steps,typed){let pos=0,si=0,doneStr='';while(si<steps.length&&pos<typed.length){let m=null;for(const opt of steps[si]){if(typed.startsWith(opt,pos)&&(!m||opt.length>m.length))m=opt;}if(m){doneStr+=canonOf(steps[si]);pos+=m.length;si++;}else break;}return{si,doneStr,cur:typed.slice(pos),curStepRoma:si<steps.length?canonOf(steps[si]):''};}
+function greedy(steps,typed){let pos=0,si=0,doneStr='';while(si<steps.length&&pos<typed.length){let m=null;for(const opt of steps[si]){if(typed.startsWith(opt,pos)&&(!m||opt.length>m.length))m=opt;}if(m){doneStr+=canonOf(steps[si]);pos+=m.length;si++;}else break;}
+  const cur=typed.slice(pos);let curStepRoma=si<steps.length?canonOf(steps[si]):'';
+  // 入力中の文字に合う表記を優先表示（例：「sy」と打ったら表示も「syo」に追従・次キーも合わせる）
+  if(si<steps.length&&cur){const ms=steps[si].filter(o=>o.startsWith(cur));if(ms.length){curStepRoma=ms.includes(curStepRoma)?curStepRoma:ms[0];}}
+  return{si,doneStr,cur,curStepRoma};}
 
 /* ===== content ===== */
-const WORDS=[['プリウス','プリウス','車名'],['アクア','アクア','車名'],['ヤリス','ヤリス','車名'],['ノート','ノート','車名'],['セレナ','セレナ','車名'],['フィット','フィット','車名'],['タント','タント','車名'],['ハスラー','ハスラー','車名'],['ジムニー','ジムニー','車名'],['デミオ','デミオ','車名'],['ハリアー','ハリアー','車名'],['アルファード','アルファード','車名'],['ランドクルーザー','ランドクルーザー','車名'],['スペーシア','スペーシア','車名'],['ルーミー','ルーミー','車名'],['ブレーキパッド','ブレーキパッド','パーツ'],['オルタネーター','オルタネーター','パーツ'],['ラジエーター','ラジエーター','パーツ'],['スパークプラグ','スパークプラグ','パーツ'],['バッテリー','バッテリー','パーツ'],['マフラー','マフラー','パーツ'],['クラッチ','クラッチ','パーツ'],['サスペンション','サスペンション','パーツ'],['ヘッドライト','ヘッドライト','パーツ'],['ファンベルト','ファンベルト','パーツ'],['異音','イオン','症状'],['振動','シンドウ','症状'],['警告灯','ケイコクトウ','症状'],['オイル漏れ','オイルモレ','症状'],['オーバーヒート','オーバーヒート','症状'],['始動不良','シドウフリョウ','症状'],['白煙','ハクエン','症状'],['エンスト','エンスト','症状'],['ガス欠','ガスケツ','症状'],['車検','シャケン','整備'],['整備','セイビ','整備'],['点検','テンケン','整備'],['板金','バンキン','整備'],['塗装','トソウ','整備'],['交換','コウカン','整備'],['調整','チョウセイ','整備'],['洗車','センシャ','整備'],['アライメント','アライメント','整備'],['試運転','シウンテン','整備'],['軽自動車','ケイジドウシャ','登録'],['名義変更','メイギヘンコウ','登録'],['車庫証明','シャコショウメイ','登録'],['ナンバープレート','ナンバープレート','登録'],['抹消登録','マッショウトウロク','登録'],['車検証','シャケンショウ','登録'],['自賠責','ジバイセキ','登録'],['重量税','ジュウリョウゼイ','登録'],['希望ナンバー','キボウナンバー','登録'],['小林','コバヤシ','スタッフ'],['椎名','シイナ','スタッフ'],['蓮沼','ハスヌマ','スタッフ'],['箱崎','ハコザキ','スタッフ'],['菅谷','スガヤ','スタッフ'],['山根','ヤマネ','スタッフ'],['山田','ヤマダ','スタッフ'],['大西','オオニシ','スタッフ'],['BMW','BMW','英数'],['MINI','MINI','英数'],['F56','F56','英数'],['ABS','ABS','英数'],['ECU','ECU','英数'],['CVT','CVT','英数']];
-const PHRASES=[['デミオがオーバーヒート','デミオガオーバーヒート','症状'],['プリウスのバッテリー上がり','プリウスノバッテリーアガリ','症状'],['ハスラーの車検','ハスラーノシャケン','整備'],['アクアが異音','アクアガイオン','症状'],['セレナのオイル漏れ','セレナノオイルモレ','症状'],['ジムニーの板金','ジムニーノバンキン','整備'],['ノートのブレーキ交換','ノートノブレーキコウカン','整備'],['ヤリスの名義変更','ヤリスノメイギヘンコウ','登録'],['タントが始動不良','タントガシドウフリョウ','症状'],['アルファードの車庫証明','アルファードノシャコショウメイ','登録'],['BMWのオイル交換','BMWノオイルコウカン','整備'],['MINIのタイヤ交換','MINIノタイヤコウカン','整備'],['ハリアーが警告灯','ハリアーガケイコクトウ','症状'],['フィットのワイパー交換','フィットノワイパーコウカン','整備'],['F56のブレーキパッド','F56ノブレーキパッド','パーツ']];
-const SENTENCES=[['長谷川さんのデミオの車庫証明を急いで取りに行く必要がある','ハセガワサンノデミオノシャコショウメイヲイソイデトリニイクヒツヨウガアル','登録'],['山田さんのアルファードが車検で入庫する予定です','ヤマダサンノアルファードガシャケンデニュウコスルヨテイデス','整備'],['社長がBMWの名義変更を頼んでいたので書類を準備する','シャチョウガBMWノメイギヘンコウヲタノンデイタノデショルイヲジュンビスル','登録'],['蓮沼さんにプリウスのオイル漏れを点検してもらう','ハスヌマサンニプリウスノオイルモレヲテンケンシテモラウ','整備'],['軽自動車の希望ナンバーは申請から交付まで時間がかかる','ケイジドウシャノキボウナンバーワシンセイカラコウフマデジカンガカカル','登録'],['大西さんがハスラーのバッテリー上がりで困っている','オオニシサンガハスラーノバッテリーアガリデコマッテイル','症状']];
-const KOKUSAN=new Set(['プリウス','アクア','ヤリス','ノート','セレナ','フィット','タント','ハスラー','ジムニー','デミオ','ハリアー','アルファード','ランドクルーザー','スペーシア','ルーミー']);
+const WORDS=[['プリウス','プリウス','車名'],['アクア','アクア','車名'],['ヤリス','ヤリス','車名'],['ノート','ノート','車名'],['セレナ','セレナ','車名'],['フィット','フィット','車名'],['タント','タント','車名'],['ハスラー','ハスラー','車名'],['ジムニー','ジムニー','車名'],['デミオ','デミオ','車名'],['ハリアー','ハリアー','車名'],['アルファード','アルファード','車名'],['ランドクルーザー','ランドクルーザー','車名'],['スペーシア','スペーシア','車名'],['ルーミー','ルーミー','車名'],['ブレーキパッド','ブレーキパッド','パーツ'],['オルタネーター','オルタネーター','パーツ'],['ラジエーター','ラジエーター','パーツ'],['スパークプラグ','スパークプラグ','パーツ'],['バッテリー','バッテリー','パーツ'],['マフラー','マフラー','パーツ'],['クラッチ','クラッチ','パーツ'],['サスペンション','サスペンション','パーツ'],['ヘッドライト','ヘッドライト','パーツ'],['ファンベルト','ファンベルト','パーツ'],['異音','イオン','症状'],['振動','シンドウ','症状'],['警告灯','ケイコクトウ','症状'],['オイル漏れ','オイルモレ','症状'],['オーバーヒート','オーバーヒート','症状'],['始動不良','シドウフリョウ','症状'],['白煙','ハクエン','症状'],['エンスト','エンスト','症状'],['ガス欠','ガスケツ','症状'],['車検','シャケン','整備'],['整備','セイビ','整備'],['点検','テンケン','整備'],['板金','バンキン','整備'],['塗装','トソウ','整備'],['交換','コウカン','整備'],['調整','チョウセイ','整備'],['洗車','センシャ','整備'],['アライメント','アライメント','整備'],['試運転','シウンテン','整備'],['軽自動車','ケイジドウシャ','登録'],['名義変更','メイギヘンコウ','登録'],['車庫証明','シャコショウメイ','登録'],['ナンバープレート','ナンバープレート','登録'],['抹消登録','マッショウトウロク','登録'],['車検証','シャケンショウ','登録'],['自賠責','ジバイセキ','登録'],['重量税','ジュウリョウゼイ','登録'],['希望ナンバー','キボウナンバー','登録'],['田中','タナカ','人名'],['佐藤','サトウ','人名'],['高橋','タカハシ','人名'],['渡辺','ワタナベ','人名'],['伊藤','イトウ','人名'],['中村','ナカムラ','人名'],['山本','ヤマモト','人名'],['加藤','カトウ','人名'],['BMW','BMW','英数'],['MINI','MINI','英数'],['F56','F56','英数'],['ABS','ABS','英数'],['ECU','ECU','英数'],['CVT','CVT','英数'],['ヴォクシー','ヴォクシー','車名'],['ノア','ノア','車名'],['ステップワゴン','ステップワゴン','車名'],['フリード','フリード','車名'],['シエンタ','シエンタ','車名'],['ヴェゼル','ヴェゼル','車名'],['ライズ','ライズ','車名'],['ロッキー','ロッキー','車名'],['カローラ','カローラ','車名'],['クラウン','クラウン','車名'],['スイフト','スイフト','車名'],['ムーヴ','ムーヴ','車名'],['タフト','タフト','車名'],['エクストレイル','エクストレイル','車名'],['キックス','キックス','車名'],['ソリオ','ソリオ','車名'],['ヴィッツ','ヴィッツ','車名'],['パッソ','パッソ','車名'],['ミラ','ミラ','車名'],['ワゴンアール','ワゴンアール','車名'],['タイヤ','タイヤ','パーツ'],['ワイパー','ワイパー','パーツ'],['エアコン','エアコン','パーツ'],['コンプレッサー','コンプレッサー','パーツ'],['ドライブシャフト','ドライブシャフト','パーツ'],['ベアリング','ベアリング','パーツ'],['タイミングベルト','タイミングベルト','パーツ'],['ウォーターポンプ','ウォーターポンプ','パーツ'],['セルモーター','セルモーター','パーツ'],['ブレーキローター','ブレーキローター','パーツ'],['ショックアブソーバー','ショックアブソーバー','パーツ'],['インジェクター','インジェクター','パーツ'],['オイルフィルター','オイルフィルター','パーツ'],['エアクリーナー','エアクリーナー','パーツ'],['スタビライザー','スタビライザー','パーツ'],['タイロッド','タイロッド','パーツ'],['ブッシュ','ブッシュ','パーツ'],['デフ','デフ','パーツ'],['ターボ','ターボ','パーツ'],['イグニッションコイル','イグニッションコイル','パーツ'],['エンジン不調','エンジンフチョウ','症状'],['異臭','イシュウ','症状'],['ブレーキ鳴き','ブレーキナキ','症状'],['アイドリング不安定','アイドリングフアンテイ','症状'],['燃費悪化','ネンピアッカ','症状'],['パンク','パンク','症状'],['冷却水漏れ','レイキャクスイモレ','症状'],['クラッチ滑り','クラッチスベリ','症状'],['ハンドル取られ','ハンドルトラレ','症状'],['加速不良','カソクフリョウ','症状'],['黒煙','コクエン','症状'],['水温上昇','スイオンジョウショウ','症状'],['ハンチング','ハンチング','症状'],['異音発生','イオンハッセイ','症状'],['異常振動','イジョウシンドウ','症状'],['タイヤ交換','タイヤコウカン','整備'],['オイル交換','オイルコウカン','整備'],['部品発注','ブヒンハッチュウ','整備'],['見積もり','ミツモリ','整備'],['納車','ノウシャ','整備'],['引き取り','ヒキトリ','整備'],['法定点検','ホウテイテンケン','整備'],['リコール対応','リコールタイオウ','整備'],['ブレーキフルード交換','ブレーキフルードコウカン','整備'],['冷却水補充','レイキャクスイホジュウ','整備'],['タイヤローテーション','タイヤローテーション','整備'],['バッテリー交換','バッテリーコウカン','整備'],['ワイパー交換','ワイパーコウカン','整備'],['下回り点検','シタマワリテンケン','整備'],['エアコンガス補充','エアコンガスホジュウ','整備'],['移転登録','イテントウロク','登録'],['変更登録','ヘンコウトウロク','登録'],['一時抹消','イチジマッショウ','登録'],['印鑑証明','インカンショウメイ','登録'],['委任状','イニンジョウ','登録'],['譲渡証明','ジョウトショウメイ','登録'],['自動車税','ジドウシャゼイ','登録'],['環境性能割','カンキョウセイノウワリ','登録'],['ナンバー変更','ナンバーヘンコウ','登録'],['住所変更','ジュウショヘンコウ','登録'],['完成検査','カンセイケンサ','登録'],['予備検査','ヨビケンサ','登録'],['構造変更','コウゾウヘンコウ','登録'],['吉田','ヨシダ','人名'],['山口','ヤマグチ','人名'],['松本','マツモト','人名'],['井上','イノウエ','人名'],['木村','キムラ','人名'],['林','ハヤシ','人名'],['清水','シミズ','人名'],['森','モリ','人名'],['池田','イケダ','人名'],['橋本','ハシモト','人名'],['斉藤','サイトウ','人名'],['岡田','オカダ','人名'],['ATF','ATF','英数'],['LLC','LLC','英数'],['EGR','EGR','英数'],['DPF','DPF','英数'],['ETC','ETC','英数'],['4WD','4WD','英数'],['EV','EV','英数'],['HV','HV','英数'],['OBD','OBD','英数'],['VSC','VSC','英数'],['N-BOX','N-BOX','英数'],['C-HR','C-HR','英数']];
+const PHRASES=[['デミオがオーバーヒート','デミオガオーバーヒート','症状'],['プリウスのバッテリー上がり','プリウスノバッテリーアガリ','症状'],['ハスラーの車検','ハスラーノシャケン','整備'],['アクアが異音','アクアガイオン','症状'],['セレナのオイル漏れ','セレナノオイルモレ','症状'],['ジムニーの板金','ジムニーノバンキン','整備'],['ノートのブレーキ交換','ノートノブレーキコウカン','整備'],['ヤリスの名義変更','ヤリスノメイギヘンコウ','登録'],['タントが始動不良','タントガシドウフリョウ','症状'],['アルファードの車庫証明','アルファードノシャコショウメイ','登録'],['BMWのオイル交換','BMWノオイルコウカン','整備'],['MINIのタイヤ交換','MINIノタイヤコウカン','整備'],['ハリアーが警告灯','ハリアーガケイコクトウ','症状'],['フィットのワイパー交換','フィットノワイパーコウカン','整備'],['F56のブレーキパッド','F56ノブレーキパッド','パーツ'],['ヴォクシーのタイヤ交換','ヴォクシーノタイヤコウカン','整備'],['フリードの法定点検','フリードノホウテイテンケン','整備'],['シエンタのバッテリー交換','シエンタノバッテリーコウカン','整備'],['ノアの車検見積もり','ノアノシャケンミツモリ','整備'],['カローラのオイル交換','カローラノオイルコウカン','整備'],['クラウンの板金塗装','クラウンノバンキントソウ','整備'],['ワゴンアールのエアコン修理','ワゴンアールノエアコンシュウリ','整備'],['スイフトのブレーキ鳴き','スイフトノブレーキナキ','症状'],['ヴェゼルの異音','ヴェゼルノイオン','症状'],['ステップワゴンの納車','ステップワゴンノノウシャ','整備'],['ライズの引き取り','ライズノヒキトリ','整備'],['クラウンの移転登録','クラウンノイテントウロク','登録'],['タフトの一時抹消','タフトノイチジマッショウ','登録'],['エクストレイルの燃費悪化','エクストレイルノネンピアッカ','症状'],['キックスの冷却水漏れ','キックスノレイキャクスイモレ','症状'],['田中さんのプリウス','タナカサンノプリウス','人名'],['佐藤さんの車検','サトウサンノシャケン','人名'],['高橋さんの名義変更','タカハシサンノメイギヘンコウ','人名'],['渡辺さんの見積もり','ワタナベサンノミツモリ','人名'],['中村さんの納車','ナカムラサンノノウシャ','人名']];
+const SENTENCES=[['田中さんのデミオの車庫証明を急いで取りに行く必要がある','タナカサンノデミオノシャコショウメイヲイソイデトリニイクヒツヨウガアル','登録'],['佐藤さんのアルファードが車検で入庫する予定です','サトウサンノアルファードガシャケンデニュウコスルヨテイデス','整備'],['高橋さんがBMWの名義変更を頼んでいたので書類を準備する','タカハシサンガBMWノメイギヘンコウヲタノンデイタノデショルイヲジュンビスル','登録'],['渡辺さんのプリウスのオイル漏れを点検する','ワタナベサンノプリウスノオイルモレヲテンケンスル','整備'],['軽自動車の希望ナンバーは申請から交付まで時間がかかる','ケイジドウシャノキボウナンバーワシンセイカラコウフマデジカンガカカル','登録'],['中村さんがハスラーのバッテリー上がりで困っている','ナカムラサンガハスラーノバッテリーアガリデコマッテイル','症状'],['佐藤さんのヴォクシーが車検で入庫するので代車を用意しておく','サトウサンノヴォクシーガシャケンデニュウコスルノデダイシャヲヨウイシテオク','整備'],['高橋さんのフリードはオイル漏れと異音があるので入庫時に点検する','タカハシサンノフリードワオイルモレトイオンガアルノデニュウコジニテンケンスル','症状'],['田中さんから名義変更の依頼があったので印鑑証明と委任状を準備する','タナカサンカラメイギヘンコウノイライガアッタノデインカンショウメイトイニンジョウヲジュンビスル','登録'],['渡辺さんのアルファードは法定点検の時期なので連絡を入れておく','ワタナベサンノアルファードワホウテイテンケンノジキナノデレンラクヲイレテオク','整備'],['中村さんのハスラーはバッテリー上がりなので出張で対応する','ナカムラサンノハスラーワバッテリーアガリナノデシュッチョウデタイオウスル','症状'],['軽自動車の名義変更は車庫証明が不要なので書類が少なくて済む','ケイジドウシャノメイギヘンコウワシャコショウメイガフヨウナノデショルイガスクナクテスム','登録']];
+const KOKUSAN=new Set(['プリウス','アクア','ヤリス','ノート','セレナ','フィット','タント','ハスラー','ジムニー','デミオ','ハリアー','アルファード','ランドクルーザー','スペーシア','ルーミー','ヴォクシー','ノア','ステップワゴン','フリード','シエンタ','ヴェゼル','ライズ','ロッキー','カローラ','クラウン','スイフト','ムーヴ','タフト','エクストレイル','キックス','ソリオ','ヴィッツ','パッソ','ミラ','ワゴンアール']);
 const DIFF={easy:{name:'簡単',data:WORDS,speed:55,single:false,dur:60},normal:{name:'普通',data:PHRASES,speed:40,single:false,dur:60},hard:{name:'上級',data:SENTENCES,speed:24,single:true,dur:80}};
 
 /* ===== settings & selection ===== */
-const SET={kbd:true,finger:true,nStrict:false};
+const SET={kbd:true,finger:true,nStrict:false,bgm:true,sfx:true,beginner:false};
 let selMode='practice', selDiff='easy';
 const $=id=>document.getElementById(id);
 
@@ -307,13 +473,15 @@ function applyFinger(container){
 function clearNext(container){[...container.querySelectorAll('.key.next,.key.nshift')].forEach(k=>{k.classList.remove('next','nshift');});}
 function highlightNext(container,ch){
   clearNext(container);
-  if(!ch)return;
+  if(!ch){ if(SET.beginner&&container===$('kbd'))HANDS.highlight(null); return; }
   let key=ch, needShift=false;
   if(/[A-Z]/.test(ch)){key=ch.toLowerCase();needShift=true;}
   const el=container.querySelector('.key[data-key="'+cssEsc(key)+'"]');
   if(el)el.classList.add('next');
+  let shiftFinger='';
   if(needShift){const finger=el?el.dataset.finger:'';const useRightShift=finger&&finger.indexOf('-l')>0;
-    const sh=container.querySelector('.key[data-key="'+(useRightShift?'shiftR':'shiftL')+'"]');if(sh)sh.classList.add('nshift');}
+    const sh=container.querySelector('.key[data-key="'+(useRightShift?'shiftR':'shiftL')+'"]');if(sh)sh.classList.add('nshift');shiftFinger=useRightShift?'f-rp':'f-lp';}
+  if(SET.beginner&&container===$('kbd')){ const finger=(el&&el.dataset.finger)?el.dataset.finger:(key===' '?'f-th':''); HANDS.highlight(finger,shiftFinger); }
 }
 function cssEsc(s){return s.replace(/["\\]/g,'\\$&');}
 function applyKbdVisibility(){
@@ -331,6 +499,7 @@ function esc(s){return(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'
 
 function start(){
   $('start').classList.add('hidden');$('result').classList.add('hidden');$('setOverlay').classList.add('hidden');
+  SOUND.ensure();SOUND.resume();
   if(selMode==='practice')startPractice();else startHonban();
 }
 
@@ -343,8 +512,10 @@ function startPractice(){
   $('tpIdle').classList.remove('hidden');$('tpBody').classList.add('hidden');
   applyKbdVisibility();$('kbd2').classList.add('off');
   G.lane=$('lane');[...G.lane.querySelectorAll('.wc,.flycar,.countdown')].forEach(e=>e.remove());
-  let n=3;const cd=document.createElement('div');cd.className='countdown';cd.textContent=n;G.lane.appendChild(cd);
-  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cd.textContent='GO';setTimeout(()=>cd.remove(),420);beginLoop();}else cd.textContent=n;},700);
+  if(SET.beginner){G.d=Object.assign({},G.d,{speed:Math.round(G.d.speed*0.62)});}
+  applyHandsVisibility();
+  let n=3;const cd=document.createElement('div');cd.className='countdown';cd.innerHTML='<span>'+n+'</span>';G.lane.appendChild(cd);SOUND.count(false);
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cd.innerHTML='<span>GO</span>';SOUND.count(true);setTimeout(()=>cd.remove(),420);SOUND.bgmStart();beginLoop();}else{cd.innerHTML='<span>'+n+'</span>';SOUND.count(false);}},700);
 }
 function beginLoop(){G.running=true;G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft--;$('time').textContent=G.timeLeft;if(G.timeLeft<=0)endGame();},1000);requestAnimationFrame(loop);}
 function spawn(now){if(G.pi>=G.pool.length){G.pool=buildPool();G.pi=0;}const w=G.pool[G.pi++];const steps=buildSteps(w.yomi,{nStrict:SET.nStrict});const el=document.createElement('div');const cls=w.cat==='車名'?(KOKUSAN.has(w.jp)?'kokusan':'yunyu'):'';el.className='wc '+cls;el.innerHTML='<div class="cat">'+esc(w.cat)+'</div><div class="jp">'+esc(w.jp)+'</div>';G.lane.appendChild(el);const lw=G.lane.clientWidth;const card={w,steps,el,x:lw+20,width:el.offsetWidth,alive:true,finished:false};G.cards.push(card);G.lastCard=card;G.lastSpawn=now;}
@@ -365,8 +536,16 @@ function pickActive(){let a=null;for(const c of G.cards){if(c.alive&&!c.finished
 function showIdle(){$('tpIdle').classList.remove('hidden');$('tpBody').classList.add('hidden');}
 function showActive(c){$('tpIdle').classList.add('hidden');$('tpBody').classList.remove('hidden');$('tpCat').textContent=c.w.cat;$('tpJp').textContent=c.w.jp;$('tpYomi').textContent=kataToHira(c.w.yomi);renderRomaji();}
 function renderRomaji(){if(!G.active)return;const c=G.active;const g=greedy(c.steps,G.typed);let html='<span class="done">'+esc(g.doneStr)+'</span>';let nextCh='';if(g.curStepRoma){const m=g.cur.length;html+='<span class="cur">'+esc(g.curStepRoma.slice(0,m))+'</span><span class="rest">'+esc(g.curStepRoma.slice(m))+'</span>';nextCh=g.curStepRoma[m]||'';}const restSteps=c.steps.slice(g.si+(g.curStepRoma?1:0)).map(s=>s[0]).join('');html+='<span class="rest">'+esc(restSteps)+'</span>';$('tpRomaji').innerHTML=html;if(SET.kbd)highlightNext($('kbd'),nextCh);}
-function missCard(c){c.finished=true;c.alive=false;c.el.classList.add('miss');c.el.classList.remove('active');G.miss++;G.combo=0;$('sMiss').textContent=G.miss;$('sCombo').textContent=0;if(G.active===c){G.active=null;G.typed='';clearNext($('kbd'));}}
-function completeCard(c){c.finished=true;c.alive=false;c.el.classList.add('done');const fly=document.createElement('div');fly.className='flycar';fly.textContent=c.w.cat==='車名'?'🚗':(c.w.cat==='スタッフ'?'🙆':'✅');fly.style.left=c.x+'px';G.lane.appendChild(fly);fly.animate([{transform:'translateY(-50%) scale(1)',opacity:1},{transform:'translateY(-260%) scale(1.4)',opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>fly.remove();setTimeout(()=>c.el&&c.el.remove(),260);const len=canonical(c.steps).length;G.done++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);const gain=len*100+Math.floor(len*100*Math.min(G.combo,10)*0.08);G.yen+=gain;$('sDone').textContent=G.done;$('sCombo').textContent=G.combo;$('yen').textContent='¥'+G.yen.toLocaleString();G.active=null;G.typed='';clearNext($('kbd'));}
+function missCard(c){c.finished=true;c.alive=false;c.el.classList.add('miss');c.el.classList.remove('active');G.miss++;G.combo=0;$('sMiss').textContent=G.miss;$('sCombo').textContent=0;$('sCombo').classList.remove('hot');
+  const cx=c.x+(c.width/2),cy=(G.lane.clientHeight/2);FX.smoke(cx,cy);FX.flash('miss');laneShake();SOUND.miss();
+  if(G.active===c){G.active=null;G.typed='';clearNext($('kbd'));if(SET.beginner)HANDS.highlight(null);}}
+function completeCard(c){c.finished=true;c.alive=false;c.el.classList.add('done');const fly=document.createElement('div');fly.className='flycar';fly.textContent=c.w.cat==='車名'?'🚗':(c.w.cat==='人名'?'🙆':'✅');fly.style.left=c.x+'px';G.lane.appendChild(fly);fly.animate([{transform:'translateY(-50%) scale(1)',opacity:1},{transform:'translateY(-260%) scale(1.4)',opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>fly.remove();setTimeout(()=>c.el&&c.el.remove(),260);const len=canonical(c.steps).length;G.done++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);const gain=len*100+Math.floor(len*100*Math.min(G.combo,10)*0.08);G.yen+=gain;$('sDone').textContent=G.done;$('sCombo').textContent=G.combo;$('yen').textContent='¥'+G.yen.toLocaleString();
+  const cx=c.x+(c.width/2), cy=(G.lane.clientHeight/2);
+  const col=c.el.classList.contains('kokusan')?'#1db97a':(c.el.classList.contains('yunyu')?'#ff5d8f':'#378ADD');
+  FX.burst(cx,cy,'#f5b73d',16); FX.burst(cx,cy,col,9); FX.scorePop(cx,cy,'+¥'+gain.toLocaleString(),G.combo>=5);
+  SOUND.ok(); $('sCombo').classList.toggle('hot',G.combo>=5);
+  if(G.combo>0&&G.combo%5===0){ FX.comboBanner(G.combo+' COMBO!'); FX.flash('good'); SOUND.combo(G.combo); }
+  G.active=null;G.typed='';clearNext($('kbd'));if(SET.beginner)HANDS.highlight(null);}
 function updateAcc(){const a=G.keys?Math.round(G.hits/G.keys*100):100;$('sAcc').textContent=a+'%';}
 document.addEventListener('keydown',e=>{
   if(!G||G.mode!=='practice'||!G.running)return;
@@ -374,8 +553,8 @@ document.addEventListener('keydown',e=>{
   const ch=e.key;if(ch.length!==1)return;if(!/[A-Za-z0-9\-,.\/ ]/.test(ch))return;
   if(!G.active)return;e.preventDefault();
   const c=G.active;const test=G.typed+ch;const res=matchTyped(c.steps,test);G.keys++;
-  if(res==='invalid'){G.combo=0;$('sCombo').textContent=0;const tp=$('typepanel');tp.classList.remove('shake');void tp.offsetWidth;tp.classList.add('shake');updateAcc();return;}
-  G.hits++;G.typed=test;updateAcc();
+  if(res==='invalid'){G.combo=0;$('sCombo').textContent=0;$('sCombo').classList.remove('hot');const tp=$('typepanel');tp.classList.remove('shake');void tp.offsetWidth;tp.classList.add('shake');SOUND.miss();updateAcc();return;}
+  G.hits++;G.typed=test;SOUND.tick();pressKey(ch);updateAcc();
   if(res==='complete')completeCard(c);else renderRomaji();
 });
 
@@ -385,13 +564,15 @@ function startHonban(){
   const d=DIFF[selDiff];
   G={mode:'honban',d,pool:buildPool(),pi:0,cur:null,done:0,miss:0,submits:0,combo:0,maxCombo:0,timeLeft:d.dur+ (d.single?40:0),running:true};
   $('yen').textContent='0';$('time').textContent=G.timeLeft;$('hDone').textContent=0;$('hCombo').textContent=0;$('hAcc').textContent='100%';$('hMiss').textContent=0;
-  $('kbd').classList.add('off');applyKbdVisibility();
+  $('kbd').classList.add('off');$('hands').classList.add('off');applyKbdVisibility();
+  SOUND.bgmStart();
   nextHonban();
   $('hbInput').value='';$('hbInput').focus();
   G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft--;$('time').textContent=G.timeLeft;if(G.timeLeft<=0)endGame();},1000);
 }
 function nextHonban(){if(G.pi>=G.pool.length){G.pool=buildPool();G.pi=0;}G.cur=G.pool[G.pi++];$('hbCat').textContent=G.cur.cat;$('hbTarget').textContent=G.cur.jp;$('hbYomi').textContent='読み：'+kataToHira(G.cur.yomi);$('hbInput').value='';$('hbInput').focus();}
-function hbFeedback(ok){const fb=$('hbFb');const card=$('hbcard');fb.textContent=ok?'✓ 正解！':'✗ 「'+G.cur.jp+'」';fb.className='hb-fb '+(ok?'ok':'ng');card.classList.add(ok?'flok':'flng');setTimeout(()=>{fb.className='hb-fb';card.classList.remove('flok','flng');},700);}
+function hbFeedback(ok){const fb=$('hbFb');const card=$('hbcard');fb.textContent=ok?'✓ 正解！':'✗ 「'+G.cur.jp+'」';fb.className='hb-fb '+(ok?'ok':'ng');card.classList.add(ok?'flok':'flng');setTimeout(()=>{fb.className='hb-fb';card.classList.remove('flok','flng');},700);
+  if(ok){SOUND.ok();FX.flash('good');if(G.combo>0&&G.combo%5===0){FX.comboBanner(G.combo+' COMBO!');SOUND.combo(G.combo);}}else{SOUND.miss();FX.flash('miss');}}
 $('hbInput').addEventListener('keydown',e=>{
   if(!G||G.mode!=='honban'||!G.running)return;
   if(e.key==='Escape'){endGame();return;}
@@ -399,8 +580,8 @@ $('hbInput').addEventListener('keydown',e=>{
   const val=$('hbInput').value.trim();if(!val)return;
   G.submits++;
   const ok=val===G.cur.jp.trim();
-  if(ok){G.done++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);$('hDone').textContent=G.done;$('hCombo').textContent=G.combo;}
-  else{G.miss++;G.combo=0;$('hMiss').textContent=G.miss;$('hCombo').textContent=0;}
+  if(ok){G.done++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);$('hDone').textContent=G.done;$('hCombo').textContent=G.combo;$('hCombo').classList.toggle('hot',G.combo>=5);}
+  else{G.miss++;G.combo=0;$('hMiss').textContent=G.miss;$('hCombo').textContent=0;$('hCombo').classList.remove('hot');}
   $('hAcc').textContent=Math.round(G.done/G.submits*100)+'%';
   hbFeedback(ok);nextHonban();
 });
@@ -425,13 +606,85 @@ function endGame(){
     else if(score>=60){rank='B';msg='いい調子';}
     $('rGrid').innerHTML=cell(G.done,'正解数')+cell(G.maxCombo,'最大コンボ')+cell(acc+'%','正確率')+cell(G.submits,'回答数')+cell(G.miss,'ミス')+cell(DIFF[selDiff].name,'難易度');
   }
-  $('rRank').textContent=rank;$('rMsg').textContent=msg;
+  const rk=$('rRank');rk.textContent=rank;rk.className='rank'+(rank==='S'?' S':'');void rk.offsetWidth;rk.classList.add('reveal');$('rMsg').textContent=msg;
+  SOUND.bgmStop();const win=(rank==='S'||rank==='A');SOUND.over(win);if(win)setTimeout(()=>FX.confetti(),250);
+  $('hands').classList.add('off');
 }
 function cell(v,k,cls){return '<div class="rcell"><div class="v '+(cls||'')+'">'+v+'</div><div class="k">'+k+'</div></div>';}
 
 $('startBtn').onclick=start;
 $('againBtn').onclick=start;
-$('backBtn').onclick=()=>{$('result').classList.add('hidden');$('start').classList.remove('hidden');$('yen').textContent='¥0';$('time').textContent='--';};
+$('backBtn').onclick=()=>{$('result').classList.add('hidden');$('start').classList.remove('hidden');$('yen').textContent='¥0';$('time').textContent='--';SOUND.bgmStop();$('hands').classList.add('off');};
+
+/* ================= JUICE: サウンド / 手 / 演出 ================= */
+/* ---- Web Audio（外部ファイル不要のチップチューン） ---- */
+const SOUND=(function(){
+  let ctx=null,master=null,bgmTimer=null,bgmStep=0,bgmGain=null;
+  function ensure(){ if(ctx)return ctx; try{ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} master=ctx.createGain(); master.gain.value=0.32; master.connect(ctx.destination); return ctx; }
+  function resume(){ if(ctx&&ctx.state==='suspended')ctx.resume(); }
+  function note(dest,freq,dur,type,vol,t){ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=type||'square'; o.frequency.setValueAtTime(freq,t); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t+dur+0.02); }
+  function blip(freq,dur,type,vol,delay){ if(!SET.sfx||!ensure())return; resume(); note(master,freq,dur||0.12,type,vol||0.28,ctx.currentTime+(delay||0)); }
+  function tick(){ blip(380+Math.random()*80,0.045,'square',0.12); }
+  function ok(){ [0,0.05,0.1].forEach((d,i)=>blip([660,880,1320][i],0.14,'triangle',0.26,d)); }
+  function miss(){ blip(170,0.2,'sawtooth',0.24,0); blip(120,0.24,'sawtooth',0.18,0.02); }
+  function combo(n){ [0,1,2,3].forEach(i=>blip(523*Math.pow(2,i/4)+n*6,0.12,'triangle',0.24,i*0.06)); }
+  function count(go){ blip(go?1046:520,go?0.32:0.13,'square',0.3,0); }
+  function over(win){ const seq=win?[523,659,784,1047,1047]:[392,330,262]; seq.forEach((f,i)=>blip(f,0.24,'triangle',0.3,i*0.13)); }
+  function hat(t){ if(!ctx||!bgmGain)return; const len=Math.floor(ctx.sampleRate*0.04); const b=ctx.createBuffer(1,len,ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3); const s=ctx.createBufferSource(); s.buffer=b; const g=ctx.createGain(); g.gain.value=0.05; s.connect(g); g.connect(bgmGain); s.start(t); }
+  const BASS=[65,65,49,55],ARP=[523,659,784,659,587,784,659,523];
+  function bgmStart(){ if(!SET.bgm||!ensure())return; resume(); bgmStop(); bgmGain=ctx.createGain(); bgmGain.gain.value=0.1; bgmGain.connect(master); bgmStep=0; const beat=0.26;
+    bgmTimer=setInterval(()=>{ if(!ctx||!bgmGain)return; const t=ctx.currentTime+0.02; if(bgmStep%2===0) note(bgmGain,BASS[(bgmStep>>1)%BASS.length],beat*1.6,'triangle',0.5,t); note(bgmGain,ARP[bgmStep%ARP.length],beat*0.6,'square',0.16,t); if(bgmStep%2===0)hat(t); bgmStep++; },beat*1000); }
+  function bgmStop(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} if(bgmGain){try{bgmGain.disconnect();}catch(e){}bgmGain=null;} }
+  return {ensure,resume,tick,ok,miss,combo,count,over,bgmStart,bgmStop};
+})();
+
+/* ---- 両手イラスト＋運指ガイド ---- */
+const HANDS=(function(){
+  const NAME={'f-lp':'左手 小指','f-lr':'左手 薬指','f-lm':'左手 中指','f-li':'左手 人差し指','f-ri':'右手 人差し指','f-rm':'右手 中指','f-rr':'右手 薬指','f-rp':'右手 小指','f-th':'親指（スペース）'};
+  function fg(f,x,h){ const y=96-h; return '<g class="finger" data-f="'+f+'" style="color:var(--'+f+')"><rect class="fpad" x="'+x+'" y="'+y+'" width="20" height="'+h+'" rx="10" fill="currentColor"/></g>'; }
+  function thumb(f,cx,cy,rot){ return '<g class="finger" data-f="'+f+'" style="color:var(--'+f+')" transform="rotate('+rot+' '+cx+' '+cy+')"><rect class="fpad" x="'+(cx-11)+'" y="'+(cy-13)+'" width="22" height="34" rx="11" fill="currentColor"/></g>'; }
+  function build(){ const host=$('hands'); if(!host)return;
+    host.innerHTML='<svg class="hands-svg" viewBox="0 0 560 150" xmlns="http://www.w3.org/2000/svg">'
+      +'<rect class="palm" x="34" y="92" width="132" height="46" rx="18"/>'
+      +'<rect class="palm" x="394" y="92" width="132" height="46" rx="18"/>'
+      +fg('f-lp',44,46)+fg('f-lr',72,64)+fg('f-lm',100,72)+fg('f-li',128,62)
+      +thumb('f-th',168,116,28)+thumb('f-th',392,116,-28)
+      +fg('f-ri',412,62)+fg('f-rm',440,72)+fg('f-rr',468,64)+fg('f-rp',496,46)
+      +'</svg><div class="hlabel" id="hlabel">次に押す指が光ります</div>';
+  }
+  function highlight(finger,shiftFinger){ const host=$('hands'); if(!host)return;
+    host.querySelectorAll('.finger.lit').forEach(e=>e.classList.remove('lit'));
+    const names=[];
+    if(finger){ host.querySelectorAll('[data-f="'+finger+'"]').forEach(e=>e.classList.add('lit')); if(NAME[finger])names.push(NAME[finger]); }
+    if(shiftFinger){ host.querySelectorAll('[data-f="'+shiftFinger+'"]').forEach(e=>e.classList.add('lit')); }
+    const lab=$('hlabel'); if(lab) lab.innerHTML=names.length?('この指で → <b>'+names.join(' ＋ ')+(shiftFinger?' ＋ 反対の小指(Shift)':'')+'</b>'):'次に押す指が光ります';
+  }
+  return {build,highlight};
+})();
+
+/* ---- 画面エフェクト ---- */
+const FX={
+  burst(x,y,color,n){ const layer=$('fxLayer'); if(!layer)return; n=n||14; for(let i=0;i<n;i++){ const p=document.createElement('div'); p.className='particle'; p.style.left=x+'px'; p.style.top=y+'px'; p.style.background=color||'#f5b73d'; layer.appendChild(p); const ang=Math.random()*Math.PI*2, sp=40+Math.random()*100, dx=Math.cos(ang)*sp, dy=Math.sin(ang)*sp-20; p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:'translate('+dx+'px,'+(dy+90)+'px) scale(.25) rotate('+(Math.random()*360)+'deg)',opacity:0}],{duration:600+Math.random()*300,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>p.remove(); } },
+  scorePop(x,y,text,big){ const layer=$('fxLayer'); if(!layer)return; const el=document.createElement('div'); el.className='scorepop'+(big?' big':''); el.textContent=text; el.style.left=x+'px'; el.style.top=y+'px'; layer.appendChild(el); el.animate([{transform:'translate(-50%,0) scale(.6)',opacity:0},{transform:'translate(-50%,-14px) scale(1.1)',opacity:1,offset:.3},{transform:'translate(-50%,-56px) scale(1)',opacity:0}],{duration:1000,easing:'ease-out'}).onfinish=()=>el.remove(); },
+  smoke(x,y){ const layer=$('fxLayer'); if(!layer)return; const el=document.createElement('div'); el.className='smoke'; el.textContent='💨'; el.style.left=x+'px'; el.style.top=y+'px'; layer.appendChild(el); el.animate([{transform:'translate(-50%,-50%) scale(.6)',opacity:.9},{transform:'translate(-30%,-170%) scale(1.5)',opacity:0}],{duration:700,easing:'ease-out'}).onfinish=()=>el.remove(); },
+  comboBanner(text){ const b=$('comboBanner'); if(!b)return; b.textContent=text; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); },
+  flash(kind){ const f=$('flash'); if(!f)return; f.className='flash'; void f.offsetWidth; f.className='flash '+kind; },
+  confetti(){ const colors=['#f5b73d','#1db97a','#378ADD','#ff5d8f','#a86fd6','#fff']; for(let i=0;i<80;i++){ const c=document.createElement('div'); c.className='confetti'; c.style.background=colors[i%colors.length]; c.style.left=(Math.random()*100)+'vw'; c.style.top='-24px'; document.body.appendChild(c); c.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:'translateY('+(window.innerHeight+80)+'px) rotate('+(360+Math.random()*720)+'deg)',opacity:1}],{duration:1700+Math.random()*1700,easing:'ease-in'}).onfinish=()=>c.remove(); } }
+};
+function pressKey(ch){ const c=$('kbd'); if(!c||!SET.kbd)return; const el=c.querySelector('.key[data-key="'+cssEsc((ch||'').toLowerCase())+'"]'); if(el){ el.classList.remove('press'); void el.offsetWidth; el.classList.add('press'); setTimeout(()=>el.classList.remove('press'),160); } }
+function laneShake(){ const l=$('lane'); if(!l)return; l.classList.remove('bigshake'); void l.offsetWidth; l.classList.add('bigshake'); setTimeout(()=>l.classList.remove('bigshake'),360); }
+
+/* ---- 設定トグル（初心者・BGM・効果音・ミュート） ---- */
+HANDS.build();
+function applyHandsVisibility(){ const h=$('hands'); if(!h)return; const show=SET.beginner && G && G.mode==='practice' && !$('game').classList.contains('hidden'); h.classList.toggle('off',!show); }
+function syncBeginner(){ $('tgBeginner').classList.toggle('on',SET.beginner); $('tgBeginner2').classList.toggle('on',SET.beginner); $('beginnerToggle').classList.toggle('on',SET.beginner); }
+function setBeginner(v){ SET.beginner=v; if(v){ SET.kbd=true; $('tgKbd').classList.add('on'); } syncBeginner(); applyKbdVisibility(); applyHandsVisibility(); }
+$('beginnerToggle').onclick=()=>setBeginner(!SET.beginner);
+$('tgBeginner2').onclick=()=>setBeginner(!SET.beginner);
+function refreshSoundUI(){ $('tgBgm').classList.toggle('on',SET.bgm); $('tgSfx').classList.toggle('on',SET.sfx); const any=SET.bgm||SET.sfx; $('sndBtn').textContent=any?'🔊':'🔇'; $('sndBtn').classList.toggle('muted',!any); }
+$('tgBgm').onclick=()=>{ SET.bgm=!SET.bgm; if(SET.bgm){ if(G&&G.running)SOUND.bgmStart(); } else SOUND.bgmStop(); refreshSoundUI(); };
+$('tgSfx').onclick=()=>{ SET.sfx=!SET.sfx; refreshSoundUI(); };
+$('sndBtn').onclick=()=>{ const any=SET.bgm||SET.sfx; if(any){ SET._b=SET.bgm; SET._s=SET.sfx; SET.bgm=false; SET.sfx=false; SOUND.bgmStop(); } else { SET.bgm=(SET._b!==undefined?SET._b:true); SET.sfx=(SET._s!==undefined?SET._s:true); if(SET.bgm&&G&&G.running)SOUND.bgmStart(); } refreshSoundUI(); };
 </script>
 </body>
 </html>

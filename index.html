@@ -105,7 +105,7 @@
     <div class="si" data-tool="sales" onclick="showTool('sales')"><span>📋</span><span>売上チェック</span></div>
     <div class="si" data-tool="sample" onclick="showTool('sample')"><span>📄</span><span>参考見積作成</span></div>
     <div class="sg">練習・その他</div>
-    <div class="si" data-tool="typing" onclick="showTool('typing')"><span>⌨️</span><span>タイピング練習</span></div>
+    <div class="si" data-tool="typing" onclick="showTool('typing')"><span>⌨️</span><span>PitType</span></div>
     <div class="sg">準備中</div>
     <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
 
@@ -136,9 +136,9 @@ function showTool(id){
 /* ===================== ⌨ タイピング練習（PitType を iframe で内包） ===================== */
 function renderTyping(){
   document.getElementById('main').innerHTML =
-    '<div class="thead"><div class="ttitle">⌨️ タイピング練習</div>'
+    '<div class="thead"><div class="ttitle">⌨️ PitType</div>'
     + '<div class="tsub">小林モータースの専門用語でタッチタイピング（練習＝流れるローマ字／本番＝変換してEnter）</div></div>'
-    + '<iframe src="typing.html?v=1" title="PitType タイピング練習" allow="autoplay" '
+    + '<iframe src="typing.html?v=6" title="PitType" allow="autoplay" '
     + 'style="width:100%;height:calc(100vh - 150px);min-height:480px;border:1px solid var(--border);border-radius:12px;margin-top:10px;background:#0e1116;display:block"></iframe>';
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
