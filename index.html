@@ -74,6 +74,10 @@
   .hint{font-size:11px;color:var(--text3);line-height:1.7;margin-top:12px}
   .today-pill{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin-top:2px}
   .today-pill b{color:var(--acc2)}
+  .ct-outmode .ct-omb{display:block;width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;transition:all .12s}
+  .ct-outmode .ct-omb:first-of-type{margin-top:0}
+  .ct-outmode .ct-omb:hover{border-color:var(--acc2)}
+  .ct-outmode .ct-omb.on{background:var(--acc);border-color:var(--acc);color:#fff}
 </style>
 <link rel="stylesheet" href="css/launcher.css?v=4">
 <!-- PDF読み取り（pdf.js）＋ ベクターPDF書き出し（jsPDF＋autotable）：パーツ税抜計算ツール用 -->
@@ -324,6 +328,9 @@ function renderParts(){
     + '<button class="chip' + (partsRate===10?' on':'') + '" onclick="partsSetRate(10)">10%</button>'
     + '<button class="chip' + (partsRate===8?' on':'') + '" onclick="partsSetRate(8)">8%</button>'
     + '</div></div>'
+    + '<div class="card ct-outmode" id="parts-mode"><div class="card-h">出力方法</div>'
+    + '<button type="button" class="ct-omb on" data-mode="download" onclick="ctSetMode(\'parts\',\'download\',event)">📥 結果をPDFダウンロード</button>'
+    + '<button type="button" class="ct-omb" data-mode="print" onclick="ctSetMode(\'parts\',\'print\',event)">🖨 結果を印刷する</button></div>'
     + '<div class="card" id="parts-drop" style="text-align:center;cursor:pointer;border-style:dashed"'
     + ' ondragover="event.preventDefault();this.style.borderColor=\'var(--acc2)\'"'
     + ' ondragleave="this.style.borderColor=\'\'"'
@@ -505,7 +512,7 @@ async function partsMakePdf(d){
   pdf.setFont('NotoSansJP','normal'); pdf.setFontSize(7);
   const note='金額は1個あたり（単価）。仕切(込)＝請求金額÷数量。太枠＝税抜／薄グレー＝税込。合計：税抜 '+y(sumGoukei)+'・税込 '+y(sumKomiTotal)+'（税込は請求書合計と一致）。税抜＝税込÷'+rate.toFixed(2)+'（四捨五入）。レス率＝仕切÷定価−1。';
   pdf.text(note, margin, fy, {maxWidth:pageW-margin*2});
-  pdf.save('税抜計算表_'+(d.sharyo||'parts')+'.pdf');
+  ctOutputPdf(pdf.output('arraybuffer'), '税抜計算表_'+(d.sharyo||'parts')+'.pdf', ctMode('parts'));
 }
 
 /* ===================== ④ 売上チェック（整備の売上チェックリストPDF） ===================== */
@@ -629,6 +636,9 @@ function renderSample(){
     '<div class="thead"><div class="ttitle">📄 参考見積作成</div><div class="tsub">見積書PDFを入れると、お客様情報を消した「参考見積」PDFを作って保存します</div></div>'
     +'<div class="wrap">'
     +'<div class="card" style="font-size:12px;line-height:1.9"><b>消すもの</b>：お客様の氏名・住所・連絡先／登録番号・受付/メカ担当・初度・類別番号・次回車検日・車台番号・車輌管理No／下部の入金確認の案内。<br><b>残すもの</b>：車名・型式・原動機型式・コード・明細・金額。左上に「参考見積」スタンプと注記を入れます。</div>'
+    +'<div class="card ct-outmode" id="sample-mode"><div class="card-h">出力方法</div>'
+    +'<button type="button" class="ct-omb on" data-mode="download" onclick="ctSetMode(\'sample\',\'download\',event)">📥 結果をPDFダウンロード</button>'
+    +'<button type="button" class="ct-omb" data-mode="print" onclick="ctSetMode(\'sample\',\'print\',event)">🖨 結果を印刷する</button></div>'
     +'<div class="card" id="sample-drop" style="text-align:center;cursor:pointer;border-style:dashed"'
     +' ondragover="event.preventDefault();this.style.borderColor=\'var(--acc2)\'" ondragleave="this.style.borderColor=\'\'"'
     +' ondrop="sampleOnDrop(event)" onclick="document.getElementById(\'sample-file\').click()">'
@@ -741,12 +751,35 @@ async function sampleBuild(srcBytes, info, srcName){
       if(info.code){ pg.drawText(info.code, {x:78, y:H-142, size:9.5, font:font, color:B}); }
     }
   });
-  // 保存＆ダウンロード
+  // 出力（ダウンロード or 印刷）
   var bytes=await doc.save();
   var name=(srcName||'見積書.pdf').replace(/\.pdf$/i,'')+'_参考見積.pdf';
-  var blob=new Blob([bytes],{type:'application/pdf'}); var url=URL.createObjectURL(blob);
-  var a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  ctOutputPdf(bytes, name, ctMode('sample'));
+}
+
+/* ===================== 出力（PDFダウンロード or 印刷）共通 ===================== */
+/* 印刷＝結果PDFを隠しiframeに読み込み、ブラウザの印刷プレビューまで一気通貫（変換結果はデータで残さない）。
+   ダウンロード＝従来どおり。どちらも元ファイルは保持しない。 */
+function ctMode(app){ var el=document.querySelector('#'+app+'-mode .ct-omb.on'); return el? el.getAttribute('data-mode') : 'download'; }
+function ctSetMode(app, mode, ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();   // ドロップエリアのクリック（ファイル選択）に伝播させない
+  var g=document.getElementById(app+'-mode'); if(!g) return;
+  [].slice.call(g.querySelectorAll('.ct-omb')).forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-mode')===mode); });
+}
+function ctOutputPdf(bytes, filename, mode){
+  var blob=new Blob([bytes],{type:'application/pdf'});
+  var url=URL.createObjectURL(blob);
+  if(mode==='print'){
+    var ifr=document.createElement('iframe');
+    ifr.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;';
+    ifr.onload=function(){ setTimeout(function(){ try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }catch(e){ window.open(url,'_blank'); } }, 400); };
+    ifr.src=url;
+    document.body.appendChild(ifr);
+    setTimeout(function(){ try{ document.body.removeChild(ifr); }catch(e){} URL.revokeObjectURL(url); }, 60000);
+  } else {
+    var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
 }
 
 /* 起動 */
