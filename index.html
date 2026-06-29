@@ -33,9 +33,15 @@
   #topbar{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
   .logo{font-size:18px;font-weight:800}
   .logo b{color:var(--acc2)}
-  .logo .ver{font-size:11px;color:var(--text3);font-weight:600;margin-left:4px}
+  .ver-pill{font-size:10px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:8px;font-weight:600}
   .spacer{flex:1}
   .tb-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:14px}
+  /* ヘッダー右側＝CarFlow準拠（アバター＋名前＋ログアウト） */
+  .topbar-user{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--acc2),var(--accd));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+  .u-name{font-size:13px;color:var(--text2)}
+  .btn-sm{font-size:11px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 9px;cursor:pointer}
+  .btn-sm:hover{color:var(--text);border-color:var(--acc2)}
 
   #side{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:12px 0}
   .sg{font-size:10px;color:var(--text3);letter-spacing:.08em;padding:14px 16px 4px;text-transform:uppercase}
@@ -46,6 +52,7 @@
   .si .soon{margin-left:auto;font-size:9.5px;color:var(--text3);border:1px solid var(--border);border-radius:999px;padding:1px 6px}
 
   #main{overflow:auto;padding:20px 22px}
+  #main.full{padding:0;overflow:hidden}
   .thead{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
   .ttitle{font-size:20px;font-weight:800}
   .tsub{font-size:12px;color:var(--text3)}
@@ -99,10 +106,15 @@
 
 <div id="app">
   <div id="topbar">
-    <div class="logo">🧰 Core<b>Tools</b><span class="ver">v0.6.0</span></div>
+    <div class="logo">🧰 Core<b>Tools</b></div>
+    <span class="ver-pill">v0.7.2</span>
     <span class="dev-badge">🚧 開発中サンプル</span>
-    <div class="spacer"></div>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
+    <div class="topbar-user">
+      <div class="av">KM</div>
+      <span class="u-name">小林モータース</span>
+      <button class="btn-sm" onclick="doLogout()">ログアウト</button>
+    </div>
   </div>
 
   <div id="side">
@@ -110,12 +122,10 @@
     <div class="si on" data-tool="unit" onclick="showTool('unit')"><span>🔧</span><span>単位変換</span></div>
     <div class="si" data-tool="wareki" onclick="showTool('wareki')"><span>📅</span><span>和暦⇔西暦</span></div>
     <div class="si" data-tool="parts" onclick="showTool('parts')"><span>🧾</span><span>パーツ税抜計算</span></div>
-    <div class="si" data-tool="sales" onclick="showTool('sales')"><span>📋</span><span>売上チェック</span></div>
     <div class="si" data-tool="sample" onclick="showTool('sample')"><span>📄</span><span>参考見積作成</span></div>
+    <div class="si" data-tool="sales" onclick="showTool('sales')"><span>📋</span><span>売上チェック</span></div>
     <div class="sg">練習・その他</div>
     <div class="si" data-tool="typing" onclick="showTool('typing')"><span>⌨️</span><span>PitType</span></div>
-    <div class="sg">準備中</div>
-    <div class="si dis"><span>📆</span><span>日付・期間計算</span><span class="soon">近日</span></div>
 
     <!-- CoreFlow アプリランチャー（共通） -->
     <div data-cf-launcher data-current="coretools"></div>
@@ -132,8 +142,15 @@ function toggleTheme(){
   r.setAttribute('data-theme', next);
   document.getElementById('theme-btn').textContent = next === 'light' ? '☀️' : '🌙';
 }
+/* ログアウト＝CoreFlowの玄関へ戻る（CoreTools自体はログイン不要のツール箱） */
+function doLogout(){
+  if (confirm('CoreFlow の玄関に戻りますか？')){
+    window.location.href = 'https://coreflow.kobayashi-motors.com';
+  }
+}
 function showTool(id){
   document.querySelectorAll('.si').forEach(s => s.classList.toggle('on', s.dataset.tool === id));
+  document.getElementById('main').classList.toggle('full', id === 'typing');  // PitTypeはヘッダー＋メニュー外を全画面表示
   if (id === 'unit')   renderUnit();
   if (id === 'wareki') renderWareki();
   if (id === 'parts')  renderParts();
@@ -143,11 +160,10 @@ function showTool(id){
 }
 /* ===================== ⌨ タイピング練習（PitType を iframe で内包） ===================== */
 function renderTyping(){
+  // 外枠・見出しを撤去し、ヘッダー＋サイドメニュー以外のエリアいっぱいに全画面表示
   document.getElementById('main').innerHTML =
-    '<div class="thead"><div class="ttitle">⌨️ PitType</div>'
-    + '<div class="tsub">小林モータースの専門用語でタッチタイピング（練習＝流れるローマ字／本番＝変換してEnter）</div></div>'
-    + '<iframe src="typing.html?v=12" title="PitType" allow="autoplay" '
-    + 'style="width:100%;height:calc(100vh - 150px);min-height:480px;border:1px solid var(--border);border-radius:12px;margin-top:10px;background:#0e1116;display:block"></iframe>';
+    '<iframe src="typing.html?v=12" title="PitType" allow="autoplay" '
+    + 'style="width:100%;height:100%;border:0;background:#0e1116;display:block"></iframe>';
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
 function fmt(n){
