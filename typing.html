@@ -626,17 +626,19 @@ function startPractice(){
   let n=3;const cd=document.createElement('div');cd.className='countdown';cd.innerHTML='<span>'+n+'</span>';G.lane.appendChild(cd);SOUND.count(false);
   const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cd.innerHTML='<span>GO</span>';SOUND.count(true);setTimeout(()=>cd.remove(),420);SOUND.bgmStart();beginLoop();}else{cd.innerHTML='<span>'+n+'</span>';SOUND.count(false);}},700);
 }
-function beginLoop(){G.running=true;G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft-=0.25;if(G.timeLeft<=0){G.timeLeft=0;updateTimerUI();endGame();return;}updateTimerUI();},250);requestAnimationFrame(loop);}
+function beginLoop(){G.running=true;G.lastT=0;G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft-=0.25;if(G.timeLeft<=0){G.timeLeft=0;updateTimerUI();endGame();return;}updateTimerUI();},250);requestAnimationFrame(loop);}
 function spawn(now){if(G.pi>=G.pool.length){G.pool=buildPool();G.pi=0;}const w=G.pool[G.pi++];const steps=buildSteps(w.yomi,{nStrict:SET.nStrict});const el=document.createElement('div');const cls=w.cat==='車名'?'kokusan':'';el.className='wc '+cls;el.innerHTML='<div class="cat">'+esc(w.cat)+'</div><div class="jp">'+esc(w.jp)+'</div>';G.lane.appendChild(el);const lw=G.lane.clientWidth;const card={w,steps,el,x:lw+20,width:el.offsetWidth,alive:true,finished:false};G.cards.push(card);G.lastCard=card;G.lastSpawn=now;}
 function loop(now){
   if(!G.running)return;
+  // フレームレート非依存：実時間（秒）で進める。60fpsでも120/144Hzでも流れる速さは一定
+  const dt=G.lastT?Math.min((now-G.lastT)/1000,0.05):1/60; G.lastT=now;
   const lw=G.lane.clientWidth;
   let room;
   if(G.d.single){room=!G.cards.some(c=>c.alive&&!c.finished);}
   else{room=!G.lastCard||!G.lastCard.alive||(G.lastCard.x+G.lastCard.width)<(lw-70);}
   if(room&&now-G.lastSpawn>Math.max(400,1200-G.d.speed*8))spawn(now);
   const px=G.d.speed;const FIN=80;
-  for(const c of G.cards){if(!c.alive)continue;c.x-=px/60;c.el.style.left=c.x+'px';if(!c.finished&&c.x<=FIN)missCard(c);}
+  for(const c of G.cards){if(!c.alive)continue;c.x-=px*dt;c.el.style.left=c.x+'px';if(!c.finished&&c.x<=FIN)missCard(c);}
   G.cards=G.cards.filter(c=>{if(!c.alive&&c.x<-200){c.el&&c.el.remove();return false;}return true;});
   pickActive();
   requestAnimationFrame(loop);
