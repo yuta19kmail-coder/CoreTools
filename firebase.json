@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "target": "coretools",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "引き継ぎメモ.md",
+      "PitType_ワードリスト.md"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [{ "key": "Cache-Control", "value": "max-age=300" }]
+      }
+    ]
+  }
+}

@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PitType ｜ 整備士タイピング</title>
+<!-- CoreFlow認証＆オンラインランキング用 Firebase（CoreTools親と同一プロジェクト・同一オリジンで認証共有） -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js?v=1"></script>
 <style>
 :root{
   --bg:#0e1116;--bg2:#11161f;--panel:#161c27;--panel2:#1b2330;--border:#26303f;--border2:#33405430;
@@ -295,6 +300,24 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .recordmsg{margin-top:10px;font-size:17px;font-weight:800;color:var(--amber);text-shadow:0 0 16px rgba(245,183,61,.6);animation:recPop .6s cubic-bezier(.2,1.4,.4,1)}
 .recordmsg.hidden{display:none}
 @keyframes recPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+/* ===== オンラインランキング ===== */
+.ranklb{width:min(720px,94vw);margin:14px auto 0;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--border);border-radius:16px;padding:14px 16px}
+.rlb-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.rlb-title{font-size:14px;font-weight:800}
+.rlb-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.rlb-tab{background:var(--panel2);color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer}
+.rlb-tab.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.rlb-list{display:flex;flex-direction:column;gap:6px;min-height:60px}
+.rlb-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:7px 11px}
+.rlb-row.me{border-color:rgba(245,183,61,.55);background:rgba(245,183,61,.08)}
+.rlb-rank{font-size:13px;font-weight:800;width:30px;text-align:center;color:var(--muted);flex:none}
+.rlb-rank.top{color:var(--amber)}
+.rlb-av{width:30px;height:30px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background-size:cover;background-position:center}
+.rlb-name{flex:1;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rlb-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;flex:none}
+.rlb-val.yen{color:var(--amber)}
+.rlb-empty{font-size:12px;color:var(--text3);text-align:center;padding:18px 0}
+.rlb-foot{font-size:10.5px;color:var(--text3);margin-top:8px;text-align:center}
 </style>
 </head>
 <body>
@@ -346,7 +369,21 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
     </div>
     <div class="bestpanel" id="bestPanel">
       <div class="bp-col self"><div class="bp-h">🏅 自己ベスト</div><div class="bp-v" id="bpSelf">—</div><div class="bp-sub" id="bpSelfSub">この設定で記録なし</div></div>
-      <div class="bp-col"><div class="bp-h">🏢 社内ベスト</div><div class="bp-v" id="bpCompany">準備中</div><div class="bp-sub">CoreFlow連携で公開予定</div></div>
+      <div class="bp-col"><div class="bp-h">🏢 社内トップ</div><div class="bp-v" id="bpCompany">—</div><div class="bp-sub" id="bpCompanySub">総合金額1位</div></div>
+    </div>
+    <!-- オンラインランキング（全メンバーの記録を保存して並べる） -->
+    <div class="ranklb" id="rankLb">
+      <div class="rlb-head">
+        <span class="rlb-title">🏆 オンラインランキング</span>
+        <div class="rlb-tabs" id="rlbTabs">
+          <button class="rlb-tab on" data-board="total">総合金額</button>
+          <button class="rlb-tab" data-board="kpm">スピード</button>
+          <button class="rlb-tab" data-board="acc">正確さ</button>
+          <button class="rlb-tab" data-board="best">スコアベスト</button>
+        </div>
+      </div>
+      <div class="rlb-list" id="rlbList"><div class="rlb-empty">ログインすると記録が保存され、ランキングに並びます。</div></div>
+      <div class="rlb-foot" id="rlbFoot"></div>
     </div>
     <div class="bigtoggle" id="beginnerToggle">
       <div class="bt-l"><b>🖐 初心者モード</b><small>両手のイラストで「どの指で押すか」を表示・ゆっくりの速度。タッチタイピングが初めての人向け。</small></div>
@@ -626,7 +663,7 @@ function startPractice(){
   let n=3;const cd=document.createElement('div');cd.className='countdown';cd.innerHTML='<span>'+n+'</span>';G.lane.appendChild(cd);SOUND.count(false);
   const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cd.innerHTML='<span>GO</span>';SOUND.count(true);setTimeout(()=>cd.remove(),420);SOUND.bgmStart();beginLoop();}else{cd.innerHTML='<span>'+n+'</span>';SOUND.count(false);}},700);
 }
-function beginLoop(){G.running=true;G.lastT=0;G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft-=0.25;if(G.timeLeft<=0){G.timeLeft=0;updateTimerUI();endGame();return;}updateTimerUI();},250);requestAnimationFrame(loop);}
+function beginLoop(){G.running=true;G.lastT=0;G.startedAt=Date.now();G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft-=0.25;if(G.timeLeft<=0){G.timeLeft=0;updateTimerUI();endGame();return;}updateTimerUI();},250);requestAnimationFrame(loop);}
 function spawn(now){if(G.pi>=G.pool.length){G.pool=buildPool();G.pi=0;}const w=G.pool[G.pi++];const steps=buildSteps(w.yomi,{nStrict:SET.nStrict});const el=document.createElement('div');const cls=w.cat==='車名'?'kokusan':'';el.className='wc '+cls;el.innerHTML='<div class="cat">'+esc(w.cat)+'</div><div class="jp">'+esc(w.jp)+'</div>';G.lane.appendChild(el);const lw=G.lane.clientWidth;const card={w,steps,el,x:lw+20,width:el.offsetWidth,alive:true,finished:false};G.cards.push(card);G.lastCard=card;G.lastSpawn=now;}
 function loop(now){
   if(!G.running)return;
@@ -680,6 +717,7 @@ function startHonban(){
   nextHonban();
   $('hbInput').value='';$('hbInput').focus();
   showHud(true);updateTimerUI();
+  G.startedAt=Date.now();
   G.timer=setInterval(()=>{if(!G.running)return;G.timeLeft-=0.25;if(G.timeLeft<=0){G.timeLeft=0;updateTimerUI();endGame();return;}updateTimerUI();},250);
 }
 function nextHonban(){if(G.pi>=G.pool.length){G.pool=buildPool();G.pi=0;}G.cur=G.pool[G.pi++];$('hbCat').textContent=G.cur.cat;$('hbTarget').textContent=G.cur.jp;$('hbYomi').textContent='読み：'+kataToHira(G.cur.yomi);$('hbInput').value='';$('hbInput').focus();}
@@ -826,6 +864,112 @@ function refreshSoundUI(){ $('tgBgm').classList.toggle('on',SET.bgm); $('tgSfx')
 $('tgBgm').onclick=()=>{ SET.bgm=!SET.bgm; if(SET.bgm){ if(G&&G.running)SOUND.bgmStart(); } else SOUND.bgmStop(); refreshSoundUI(); };
 $('tgSfx').onclick=()=>{ SET.sfx=!SET.sfx; refreshSoundUI(); };
 $('sndBtn').onclick=()=>{ const any=SET.bgm||SET.sfx; if(any){ SET._b=SET.bgm; SET._s=SET.sfx; SET.bgm=false; SET.sfx=false; SOUND.bgmStop(); } else { SET.bgm=(SET._b!==undefined?SET._b:true); SET.sfx=(SET._s!==undefined?SET._s:true); if(SET.bgm&&G&&G.running)SOUND.bgmStart(); } refreshSoundUI(); };
+</script>
+
+<!-- ===== オンラインランキング（CoreFlow認証・全員の記録を保存して並べる） ===== -->
+<script>
+(function(){
+  var COMPANY_ID='kobayashi_motors';
+  var PT={ user:null, member:null, board:'total', cache:null };
+  window.PT=PT;
+  function db(){ return (window.fb&&window.fb.db)||(typeof firebase!=='undefined'&&firebase.firestore())||null; }
+  function auth(){ return (window.fb&&window.fb.auth)||(typeof firebase!=='undefined'&&firebase.auth())||null; }
+  function initials(n){ n=(n||'').trim(); return n? n.replace(/\s+/g,'').slice(0,2):'?'; }
+  function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  async function loadMember(user){
+    try{
+      var coll=db().collection('companies').doc(COMPANY_ID).collection('portalMembers');
+      var d=await coll.doc(user.uid).get();
+      if(d.exists) return d.data();
+      if(user.email){ var s=await coll.where('email','==',user.email).limit(1).get(); if(!s.empty) return s.docs[0].data(); }
+    }catch(e){ console.warn('[PT] member lookup', e); }
+    return null;
+  }
+
+  // ゲーム終了時：自分のドキュメントを max/合算 で更新（トランザクション）
+  PT.onGameEnd=async function(){
+    try{
+      if(!PT.user || typeof G==='undefined' || !G) return;
+      var elapsed=Math.max(1,(Date.now()-(G.startedAt||Date.now()))/1000);
+      var keys=G.keys||0, hits=G.hits||0;
+      var kpm=(G.mode==='practice'&&keys>0)?Math.round(hits/elapsed*60):0;   // 正タイプ/分
+      var accP=(G.mode==='practice'&&keys>=60)?Math.round(hits/keys*100):0;  // 60打以上の回だけ正確率を採用
+      var thisYen=(G.mode==='practice')?(G.yen||0):0;
+      var name=(PT.member&&PT.member.name)||PT.user.displayName||'メンバー';
+      var photo=(PT.member&&PT.member.photo)||PT.user.photoURL||'';
+      var ref=db().collection('companies').doc(COMPANY_ID).collection('pittypeScores').doc(PT.user.uid);
+      await db().runTransaction(async function(tx){
+        var snap=await tx.get(ref); var d=snap.exists?snap.data():{};
+        tx.set(ref,{
+          uid:PT.user.uid, name:name, photo:photo,
+          totalYen:(d.totalYen||0)+thisYen,
+          bestYen:Math.max(d.bestYen||0, thisYen),
+          bestKpm:Math.max(d.bestKpm||0, kpm),
+          bestAcc:Math.max(d.bestAcc||0, accP),
+          bestCorrect:Math.max(d.bestCorrect||0, (G.mode==='honban'?(G.done||0):0)),
+          plays:(d.plays||0)+1,
+          updatedAt:(window.fb&&window.fb.serverTimestamp)?window.fb.serverTimestamp():new Date()
+        },{merge:true});
+      });
+      await PT.loadBoard(true);
+    }catch(e){ console.warn('[PT] save score failed', e); }
+  };
+
+  PT.loadBoard=async function(force){
+    if(!PT.user){ renderEmpty('ログインすると記録が保存され、ランキングに並びます。'); return; }
+    try{
+      if(PT.cache && !force){ renderBoard(); return; }
+      var snap=await db().collection('companies').doc(COMPANY_ID).collection('pittypeScores').get();
+      var rows=[]; snap.forEach(function(d){ rows.push(d.data()); });
+      PT.cache=rows; renderBoard(); updateBestPanel();
+    }catch(e){ console.warn('[PT] load board', e); renderEmpty('ランキングを読み込めませんでした。'); }
+  };
+
+  function boardConf(){ return {
+    total:{key:'totalYen',fmt:yen,yen:true}, kpm:{key:'bestKpm',fmt:function(v){return (v||0)+' /分';}},
+    acc:{key:'bestAcc',fmt:function(v){return (v||0)+'%';}}, best:{key:'bestYen',fmt:yen,yen:true}
+  }[PT.board]; }
+
+  function renderBoard(){
+    var list=document.getElementById('rlbList'); if(!list) return;
+    var cf=boardConf();
+    var rows=(PT.cache||[]).filter(function(r){return (r[cf.key]||0)>0;}).sort(function(a,b){return (b[cf.key]||0)-(a[cf.key]||0);});
+    if(!rows.length){ renderEmpty('まだ記録がありません。1プレイすると載ります！'); return; }
+    list.innerHTML=rows.slice(0,12).map(function(r,i){
+      var me=PT.user&&r.uid===PT.user.uid;
+      var av=r.photo?('style="background-image:url(\''+esc(r.photo)+'\')"'):'';
+      return '<div class="rlb-row'+(me?' me':'')+'">'
+        +'<div class="rlb-rank'+(i<3?' top':'')+'">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</div>'
+        +'<div class="rlb-av" '+av+'>'+(r.photo?'':esc(initials(r.name)))+'</div>'
+        +'<div class="rlb-name">'+esc(r.name||'メンバー')+'</div>'
+        +'<div class="rlb-val'+(cf.yen?' yen':'')+'">'+cf.fmt(r[cf.key])+'</div></div>';
+    }).join('');
+    var myIdx=rows.findIndex(function(r){return PT.user&&r.uid===PT.user.uid;});
+    var foot=document.getElementById('rlbFoot');
+    if(foot) foot.textContent=(myIdx>=0)?('あなたは '+rows.length+'人中 '+(myIdx+1)+'位'):'まだこのボードに記録がありません';
+  }
+  function renderEmpty(msg){ var l=document.getElementById('rlbList'); if(l)l.innerHTML='<div class="rlb-empty">'+esc(msg)+'</div>'; var f=document.getElementById('rlbFoot'); if(f)f.textContent=''; }
+  function updateBestPanel(){
+    var rows=(PT.cache||[]).filter(function(r){return (r.totalYen||0)>0;}).sort(function(a,b){return (b.totalYen||0)-(a.totalYen||0);});
+    var v=document.getElementById('bpCompany'), sub=document.getElementById('bpCompanySub');
+    if(v){ if(rows.length){ v.textContent=yen(rows[0].totalYen); v.classList.add('yen'); if(sub)sub.textContent=(rows[0].name||'')+'（総合1位）'; } else { v.textContent='—'; if(sub)sub.textContent='総合金額1位'; } }
+  }
+  window.companyBest=function(){ var rows=(PT.cache||[]).filter(function(r){return (r.totalYen||0)>0;}).sort(function(a,b){return (b.totalYen||0)-(a.totalYen||0);}); return rows[0]||null; };
+
+  var tabs=document.getElementById('rlbTabs');
+  if(tabs) tabs.addEventListener('click',function(e){ var b=e.target.closest('.rlb-tab'); if(!b)return; PT.board=b.dataset.board; [].forEach.call(tabs.querySelectorAll('.rlb-tab'),function(x){x.classList.toggle('on',x===b);}); renderBoard(); });
+
+  function watch(){ var a=auth(); if(!a){ setTimeout(watch,300); return; }
+    a.onAuthStateChanged(async function(u){ PT.user=u||null;
+      if(u){ PT.member=await loadMember(u); PT.loadBoard(true); }
+      else { PT.cache=null; renderEmpty('ログインすると記録が保存され、ランキングに並びます。'); }
+    });
+  }
+  watch();
+  if(typeof endGame==='function'){ var _origEnd=endGame; endGame=function(){ _origEnd.apply(this,arguments); PT.onGameEnd(); }; }
+})();
 </script>
 </body>
 </html>

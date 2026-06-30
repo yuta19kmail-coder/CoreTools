@@ -89,6 +89,27 @@
   .ct-outmode .ct-omb:first-of-type{margin-top:0}
   .ct-outmode .ct-omb:hover{border-color:var(--acc2)}
   .ct-outmode .ct-omb.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+  /* ===== ログイン画面 ===== */
+  #ct-login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(900px 500px at 70% -10%,#1b2330 0%,var(--bg) 60%);padding:20px}
+  .ct-login-box{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:34px 30px;width:min(380px,92vw);
+    box-shadow:0 30px 70px rgba(0,0,0,.5);text-align:center}
+  .ct-login-logo{font-size:26px;font-weight:800;margin-bottom:6px}
+  .ct-login-logo b{color:var(--acc2)}
+  .ct-login-sub{font-size:12px;color:var(--text3);margin-bottom:20px}
+  .ct-login-hint{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:18px}
+  .ct-login-hint small{font-size:11px;color:var(--text3)}
+  .btn-google{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:#fff;color:#1f2937;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn-google:hover{box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .btn-google:disabled{opacity:.6;cursor:default}
+  #ct-login-loading{display:none;font-size:12px;color:var(--text3);padding:10px}
+  #ct-login-error{display:none;margin-top:14px;font-size:12px;color:#fca5a5;background:rgba(239,83,80,.1);
+    border:1px solid rgba(239,83,80,.4);border-radius:8px;padding:10px;line-height:1.6}
+  #ct-inapp-warning{display:none;margin-top:14px;font-size:12px;color:#fcd34d;background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.4);border-radius:8px;padding:12px;line-height:1.7;text-align:left}
+  .ct-login-ver{margin-top:18px;font-size:11px;color:var(--text3)}
 </style>
 <link rel="stylesheet" href="css/launcher.css?v=4">
 <!-- PDF読み取り（pdf.js）＋ ベクターPDF書き出し（jsPDF＋autotable）：パーツ税抜計算ツール用 -->
@@ -101,18 +122,50 @@
 <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
 <!-- 参考見積ツール用 極小日本語フォント（base64・事前最小化済み） -->
 <script src="js/sample-quote-font.js?v=1"></script>
+<!-- CoreFlow認証（Firebase・CarFlowと同じ carflow-9d500 プロジェクト＝同じGoogleアカウント/名簿で入れる） -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js?v=1"></script>
 </head>
 <body>
 
-<div id="app">
+<!-- ========== ログイン画面（CoreFlow認証） ========== -->
+<div id="ct-login-screen">
+  <div class="ct-login-box">
+    <div class="ct-login-logo">🧰 Core<b>Tools</b></div>
+    <div class="ct-login-sub">小林モータース 業務ツール</div>
+    <div class="ct-login-hint">
+      Google アカウントでログインしてください<br>
+      <small>※ CoreFlow名簿に登録済みのアカウントのみ利用できます</small>
+    </div>
+    <div id="ct-login-loading">認証状態を確認中…</div>
+    <button class="btn-google" id="ct-login-btn" onclick="doLogin()">
+      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+      </svg>
+      Google でログイン
+    </button>
+    <div id="ct-login-error"></div>
+    <div id="ct-inapp-warning">
+      ⚠ LINE・Instagram などのアプリ内ブラウザではログインできません。<br>右上の「…」や共有から <b>Safari / Chrome で開き直して</b>ください。
+    </div>
+    <div class="ct-login-ver">v0.8.0</div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
   <div id="topbar">
     <div class="logo">🧰 Core<b>Tools</b></div>
-    <span class="ver-pill">v0.7.4</span>
+    <span class="ver-pill">v0.8.0</span>
     <span class="dev-badge">🚧 開発中サンプル</span>
     <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
     <div class="topbar-user">
-      <div class="av">KM</div>
-      <span class="u-name">小林モータース</span>
+      <div class="av" id="u-av">👤</div>
+      <span class="u-name" id="u-name">—</span>
       <button class="btn-sm" onclick="doLogout()">ログアウト</button>
     </div>
   </div>
@@ -142,12 +195,7 @@ function toggleTheme(){
   r.setAttribute('data-theme', next);
   document.getElementById('theme-btn').textContent = next === 'light' ? '☀️' : '🌙';
 }
-/* ログアウト＝CoreFlowの玄関へ戻る（CoreTools自体はログイン不要のツール箱） */
-function doLogout(){
-  if (confirm('CoreFlow の玄関に戻りますか？')){
-    window.location.href = 'https://coreflow.kobayashi-motors.com';
-  }
-}
+/* doLogin / doLogout は js/auth.js（CoreFlow認証）が window に定義する */
 function showTool(id){
   document.querySelectorAll('.si').forEach(s => s.classList.toggle('on', s.dataset.tool === id));
   document.getElementById('main').classList.toggle('full', id === 'typing');  // PitTypeはヘッダー＋メニュー外を全画面表示
@@ -162,7 +210,7 @@ function showTool(id){
 function renderTyping(){
   // 外枠・見出しを撤去し、ヘッダー＋サイドメニュー以外のエリアいっぱいに全画面表示
   document.getElementById('main').innerHTML =
-    '<iframe src="typing.html?v=14" title="PitType" allow="autoplay" '
+    '<iframe src="typing.html?v=15" title="PitType" allow="autoplay" '
     + 'style="width:100%;height:100%;border:0;background:#0e1116;display:block"></iframe>';
 }
 /* 数値整形：大きすぎ・小さすぎを読みやすく。trailing zero を落とす */
@@ -806,5 +854,6 @@ function ctOutputPdf(bytes, filename, mode){
 renderUnit();
 </script>
 <script src="js/launcher.js?v=3"></script>
+<script src="js/auth.js?v=1"></script>
 </body>
 </html>
