@@ -37,7 +37,10 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .hidden{display:none!important}
 
 /* start */
-#start{justify-content:center;align-items:center;text-align:center}
+/* 小さいモニターでも下まで届くように：溢れたらスクロール、余裕があれば中央（before/afterのauto余白で中央寄せ） */
+#start{justify-content:flex-start;align-items:center;text-align:center;overflow-y:auto;overflow-x:hidden}
+#start::before{content:"";margin-top:auto;flex:0 0 auto}
+#start::after{content:"";margin-bottom:auto;flex:0 0 auto}
 .hero{font-size:34px;font-weight:800;line-height:1.18}
 .hero .pit{color:var(--blue)}
 .tag{color:var(--muted);font-size:14px;max-width:600px;margin:9px auto 0;line-height:1.6}
@@ -127,7 +130,9 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .kblabel{font-size:10px;color:var(--muted);text-align:center;margin-top:2px}
 
 /* result */
-#result{justify-content:center;align-items:center;text-align:center}
+#result{justify-content:flex-start;align-items:center;text-align:center;overflow-y:auto;overflow-x:hidden}
+#result::before{content:"";margin-top:auto;flex:0 0 auto}
+#result::after{content:"";margin-bottom:auto;flex:0 0 auto}
 .rank{font-size:74px;font-weight:800;line-height:1;background:linear-gradient(180deg,#fff,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
 .rankmsg{color:var(--muted);font-size:15px;margin-top:2px}
 .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:18px;width:min(640px,92vw)}
