@@ -109,6 +109,13 @@
       try { await window.fb.auth.signOut(); } catch (e) {}
       return;
     }
+    // CoreFlow設定の「CoreTools＝使える」で入室を制御（マスター＝ゆうたは常に可）
+    var canUse = (member.master === true) || (member.coretools && member.coretools.on === true);
+    if (!canUse) {
+      _loginError('CoreToolsの利用権限がありません。CoreFlowの設定で「CoreTools＝使える」をオンにしてもらってください。');
+      try { await window.fb.auth.signOut(); } catch (e) {}
+      return;
+    }
     window.fb.currentUser = user;
     window.fb.currentCompanyId = COMPANY_ID;
     window.fb.currentMember = member;

@@ -5,8 +5,11 @@
   "targets": {
     "carflow-9d500": {
       "hosting": {
-        "coretools": ["coretools"]
+        "coretools": [
+          "coretools"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }
