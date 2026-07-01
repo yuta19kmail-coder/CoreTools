@@ -770,14 +770,18 @@ $('hbInput').addEventListener('keydown',e=>{
   hbFeedback(ok);nextHonban();
 });
 
+/* レーティングのしきい値（金額/正解数にほぼ比例・G〜SSの9段階）。結果判定＋バッジ表示で共通利用。 */
+function tierP(adj){return adj>=200000?'SS':adj>=140000?'S':adj>=95000?'A':adj>=60000?'B':adj>=35000?'C':adj>=18000?'D':adj>=8000?'E':adj>=3000?'F':'G';}
+function tierH(adj){return adj>=4200?'SS':adj>=2900?'S':adj>=1900?'A':adj>=1150?'B':adj>=650?'C':adj>=340?'D':adj>=160?'E':adj>=60?'F':'G';}
+/* 保存済みの金額(ベスト)から直接ランク文字を出す＝古い保存ランク番号に依存しない（過去記録も新基準で正しく表示） */
+window.pitRankByScore=function(isP,s){ return (s>0)?(isP?tierP(s):tierH(s)):'—'; };
+
 /* ===== END / RESULT ===== */
 function endGame(){
   if(!G)return;G.running=false;clearInterval(G.timer);
   $('game').classList.add('hidden');$('honban').classList.add('hidden');$('result').classList.remove('hidden');
   /* レーティング＝金額（本番は正解数）にほぼ比例。正確率で割引・コンボで加点。下はG〜上はSSの9段階。 */
   const RANK_MSG={SS:'規格外！レジェンド整備士',S:'神整備士！工場長も脱帽',A:'即戦力！いい仕事',B:'なかなかの腕前',C:'いい調子',D:'その調子で',E:'伸びてきた',F:'まだまだ伸びる',G:'まずはここから'};
-  function tierP(adj){return adj>=200000?'SS':adj>=140000?'S':adj>=95000?'A':adj>=60000?'B':adj>=35000?'C':adj>=18000?'D':adj>=8000?'E':adj>=3000?'F':'G';}
-  function tierH(adj){return adj>=4200?'SS':adj>=2900?'S':adj>=1900?'A':adj>=1150?'B':adj>=650?'C':adj>=340?'D':adj>=160?'E':adj>=60?'F':'G';}
   let rank='G',msg='';
   if(G.mode==='practice'){
     const acc=G.keys?Math.round(G.hits/G.keys*100):100;
@@ -826,7 +830,7 @@ function bestKeyFor(mode,diff,dur){ return mode+'_'+diff+'_'+dur; }
 function fmtBest(mode,entry){ if(!entry)return null; return mode==='practice'?('¥'+(entry.score||0).toLocaleString()):((entry.score||0)+'問'); }
 function companyBest(){ return null; /* TODO: CoreFlow連携でチームのトップをFirestoreからLoad */ }
 function _today(){ const d=new Date(); return (d.getMonth()+1)+'/'+d.getDate(); }
-function refreshBestPanel(){ const b=getBests()[bestKeyFor(selMode,selDiff,selDur)]; const self=$('bpSelf'),sub=$('bpSelfSub'); if(self){const t=fmtBest(selMode,b);self.textContent=t||'—';self.classList.toggle('yen',selMode==='practice'&&!!t);} if(sub)sub.textContent=b?('ランク '+(b.rank||'-')+'　'+(b.date||'')):'この設定で記録なし'; if(window.PT&&window.PT.refresh)window.PT.refresh(); }
+function refreshBestPanel(){ const b=getBests()[bestKeyFor(selMode,selDiff,selDur)]; const self=$('bpSelf'),sub=$('bpSelfSub'); if(self){const t=fmtBest(selMode,b);self.textContent=t||'—';self.classList.toggle('yen',selMode==='practice'&&!!t);} if(sub)sub.textContent=b?('ランク '+((window.pitRankByScore&&b.score)?pitRankByScore(selMode==='practice',b.score):(b.rank||'-'))+'　'+(b.date||'')):'この設定で記録なし'; if(window.PT&&window.PT.refresh)window.PT.refresh(); }
 function saveBestAfterGame(){ if(!G)return {isRecord:false,best:null}; const key=bestKeyFor(G.mode,G.diff,G.totalDur),bests=getBests(),prev=bests[key],score=G.mode==='practice'?(G.yen||0):(G.done||0),isRecord=score>0&&(!prev||score>prev.score); if(isRecord){bests[key]={score,rank:G._rank||'',date:_today()};setBests(bests);} return {isRecord,best:isRecord?bests[key]:prev}; }
 refreshBestPanel();
 
@@ -992,7 +996,7 @@ $('sndBtn').onclick=()=>{ const any=SET.bgm||SET.sfx; if(any){ SET._b=SET.bgm; S
     list.innerHTML=rows.slice(0,12).map(function(r,i){
       var me=PT.user&&r.uid===PT.user.uid;
       var av=r.photo?('style="background-image:url(\''+esc(r.photo)+'\')"'):'';
-      var rk=RANKL[r.e.bestRank||0]; var rkb='<span class="rlb-rk'+((rk&&rk!=='—')?' '+rk:'')+'">'+((rk&&rk!=='—')?rk:'–')+'</span>';
+      var rk=(window.pitRankByScore?pitRankByScore(isPractice(),r.e.bestScore||0):RANKL[r.e.bestRank||0]); var rkb='<span class="rlb-rk'+((rk&&rk!=='—')?' '+rk:'')+'">'+((rk&&rk!=='—')?rk:'–')+'</span>';
       return '<div class="rlb-row'+(me?' me':'')+'">'
         +'<div class="rlb-rank'+(i<3?' top':'')+'">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</div>'
         +'<div class="rlb-av" '+av+'>'+(r.photo?'':esc(initials(r.name)))+'</div>'
@@ -1012,7 +1016,7 @@ $('sndBtn').onclick=()=>{ const any=SET.bgm||SET.sfx; if(any){ SET._b=SET.bgm; S
       .sort(function(a,b){ return (b.e.bestScore||0)-(a.e.bestScore||0); });
     var top=rows[0]||null;
     var topVal=top?(isPractice()?yen(top.e.bestScore):(top.e.bestScore+'問')):'';
-    var topRk=top?RANKL[top.e.bestRank||0]:'';
+    var topRk=top?(window.pitRankByScore?pitRankByScore(isPractice(),top.e.bestScore||0):''):'';
     // スタート画面：社内トップ
     var v=document.getElementById('bpCompany'), sub=document.getElementById('bpCompanySub');
     if(v){ if(top){ v.textContent=topVal; v.classList.toggle('yen',isPractice()); if(sub)sub.textContent=(top.name||'')+((topRk&&topRk!=='—')?'（'+topRk+'）':''); } else { v.textContent='—'; v.classList.remove('yen'); if(sub)sub.textContent='この設定の記録なし'; } }
