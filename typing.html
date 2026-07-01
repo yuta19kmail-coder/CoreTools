@@ -59,6 +59,19 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
 .startbtn{margin-top:18px;background:linear-gradient(180deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:14px;padding:14px 52px;font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 12px 30px rgba(37,99,235,.4);transition:.14s}
 .startbtn:hover{transform:translateY(-2px)}
 .foot{color:#5b6678;font-size:11.5px;margin-top:12px}
+/* スタート画面を2カラムで収める（スクロールを出さない方向）v0.8.4 */
+.start-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(1040px,97%);margin-top:10px;align-items:start;text-align:left}
+.start-left,.start-right{min-width:0}
+.start-right{display:flex;flex-direction:column;gap:10px}
+.start-cols .card{margin-top:0;width:100%;padding:14px 16px}
+.start-right .bestpanel,.start-right .ranklb{width:100%;margin:0}
+.start-right .rlb-list{max-height:190px;overflow-y:auto}
+.start-bottom{display:flex;align-items:center;gap:14px;width:min(1040px,97%);margin-top:12px}
+.start-bottom .bigtoggle{flex:1;width:auto;margin-top:0}
+.start-bottom .startbtn{flex:none;margin-top:0}
+#start .herosub{font-size:12px}
+#start .tag{font-size:12px;margin-top:6px;max-width:1000px}
+@media(max-width:860px){.start-cols{grid-template-columns:1fr}.start-bottom{flex-direction:column;align-items:stretch}}
 
 /* settings modal */
 .overlay{position:fixed;inset:0;background:rgba(6,9,14,.66);display:flex;align-items:center;justify-content:center;z-index:50}
@@ -358,6 +371,8 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
       <div class="herosub">整備士タイピング</div>
     </div>
     <div class="tag">車名・パーツ・症状・整備用語・登録用語・お客様名（田中さん等）をミックスで出題。指の速さを鍛える「練習」と、変換まで含めた実務の「本番」。</div>
+    <div class="start-cols">
+     <div class="start-left">
     <div class="card">
       <h3>モード</h3>
       <div class="modes" id="modes">
@@ -378,6 +393,8 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
         <div class="diff" data-dur="30"><div class="nm">鬼</div><div class="ds">30秒スタート</div></div>
       </div>
     </div>
+     </div>
+     <div class="start-right">
     <div class="bestpanel" id="bestPanel">
       <div class="bp-col self"><div class="bp-h">🏅 自己ベスト</div><div class="bp-v" id="bpSelf">—</div><div class="bp-sub" id="bpSelfSub">この設定で記録なし</div></div>
       <div class="bp-col"><div class="bp-h">🏢 社内トップ</div><div class="bp-v" id="bpCompany">—</div><div class="bp-sub" id="bpCompanySub">金額1位</div></div>
@@ -397,11 +414,15 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
       <div class="rlb-list" id="rlbList"><div class="rlb-empty">ログインすると記録が保存され、ランキングに並びます。</div></div>
       <div class="rlb-foot" id="rlbFoot"></div>
     </div>
+     </div>
+    </div>
+    <div class="start-bottom">
     <div class="bigtoggle" id="beginnerToggle">
       <div class="bt-l"><b>🖐 初心者モード</b><small>両手のイラストで「どの指で押すか」を表示・ゆっくりの速度。タッチタイピングが初めての人向け。</small></div>
       <div class="toggle" id="tgBeginner"><div class="kn"></div></div>
     </div>
     <button class="startbtn" id="startBtn">▶ ピットイン</button>
+    </div>
     <div class="foot">⏱ <b>タイムアタック</b>：1つ打ち切るごとに <b style="color:var(--green)">＋秒</b>、ミスで <b style="color:var(--pink)">−秒</b>。上手いほど長く続けられる！　／　し＝shi/si どちらでもOK・「ー」は - キー・英数字はShiftで大文字　／　⚙で設定</div>
   </div>
 
@@ -456,7 +477,7 @@ body{background:radial-gradient(1200px 600px at 70% -10%,#16243a 0%,var(--bg) 55
     <div class="rgrid" id="rGrid"></div>
     <div class="bestpanel" style="margin-top:14px">
       <div class="bp-col self"><div class="bp-h">🏅 自己ベスト（この設定）</div><div class="bp-v" id="bpSelfR">—</div></div>
-      <div class="bp-col"><div class="bp-h">🏢 社内ベスト</div><div class="bp-v">準備中</div><div class="bp-sub">CoreFlow連携で公開予定</div></div>
+      <div class="bp-col"><div class="bp-h">🏢 社内ベスト</div><div class="bp-v" id="bpCompanyR">—</div><div class="bp-sub" id="bpCompanyRSub">—</div></div>
     </div>
     <div class="rbtns">
       <button class="btn2" id="backBtn">設定を変える</button>
@@ -773,6 +794,7 @@ function endGame(){
   G._rank=rank;const rec=saveBestAfterGame();
   $('recordMsg').classList.toggle('hidden',!rec.isRecord);
   const bsr=$('bpSelfR');if(bsr){const t=fmtBest(G.mode,rec.best);bsr.textContent=t||'—';bsr.classList.toggle('yen',G.mode==='practice'&&!!t);}
+  if(window.PT&&PT.syncPanels)PT.syncPanels();   // 社内ベスト（結果画面）を今の記録で埋める。保存後にonGameEnd→loadBoardで再度最新化
   if(rec.isRecord)setTimeout(()=>FX.confetti(),200);
   $('hands').classList.add('off');showHud(false);
 }
@@ -984,12 +1006,23 @@ $('sndBtn').onclick=()=>{ const any=SET.bgm||SET.sfx; if(any){ SET._b=SET.bgm; S
   function renderEmpty(msg){ updateCap(); var l=document.getElementById('rlbList'); if(l)l.innerHTML='<div class="rlb-empty">'+esc(msg)+'</div>'; var f=document.getElementById('rlbFoot'); if(f)f.textContent=''; }
   function updateBestPanel(){
     var key=curKey();
-    var rows=(PT.cache||[]).map(function(r){ var e=(r.v&&r.v[key])||null; return e?{name:r.name,e:e}:null; })
+    var rows=(PT.cache||[]).map(function(r){ var e=(r.v&&r.v[key])||null; return e?{name:r.name,uid:r.uid,e:e}:null; })
       .filter(function(r){ return r && (r.e.bestScore||0)>0; })
       .sort(function(a,b){ return (b.e.bestScore||0)-(a.e.bestScore||0); });
+    var top=rows[0]||null;
+    var topVal=top?(isPractice()?yen(top.e.bestScore):(top.e.bestScore+'問')):'';
+    var topRk=top?RANKL[top.e.bestRank||0]:'';
+    // スタート画面：社内トップ
     var v=document.getElementById('bpCompany'), sub=document.getElementById('bpCompanySub');
-    if(v){ if(rows.length){ var t=rows[0]; v.textContent=isPractice()?yen(t.e.bestScore):(t.e.bestScore+'問'); v.classList.toggle('yen',isPractice()); var rk=RANKL[t.e.bestRank||0]; if(sub)sub.textContent=(t.name||'')+((rk&&rk!=='—')?'（'+rk+'）':''); } else { v.textContent='—'; v.classList.remove('yen'); if(sub)sub.textContent='この設定の記録なし'; } }
+    if(v){ if(top){ v.textContent=topVal; v.classList.toggle('yen',isPractice()); if(sub)sub.textContent=(top.name||'')+((topRk&&topRk!=='—')?'（'+topRk+'）':''); } else { v.textContent='—'; v.classList.remove('yen'); if(sub)sub.textContent='この設定の記録なし'; } }
+    // 結果画面：社内ベスト＋自分の順位（ゲームオーバー時に表示）
+    var vr=document.getElementById('bpCompanyR'), subr=document.getElementById('bpCompanyRSub');
+    if(vr){ if(top){ vr.textContent=topVal; vr.classList.toggle('yen',isPractice());
+        var myIdx=PT.user?rows.findIndex(function(r){return r.uid===PT.user.uid;}):-1;
+        if(subr)subr.textContent=(myIdx>=0)?('あなた '+rows.length+'人中 '+(myIdx+1)+'位'):((top.name||'')+((topRk&&topRk!=='—')?'（'+topRk+'）':''));
+      } else { vr.textContent=PT.user?'まだ記録なし':'ログインで表示'; vr.classList.remove('yen'); if(subr)subr.textContent=''; } }
   }
+  PT.syncPanels=updateBestPanel;
   window.companyBest=function(){ var key=curKey(); var rows=(PT.cache||[]).map(function(r){var e=(r.v&&r.v[key])||null;return e?{name:r.name,e:e}:null;}).filter(function(r){return r&&(r.e.bestScore||0)>0;}).sort(function(a,b){return (b.e.bestScore||0)-(a.e.bestScore||0);}); return rows[0]||null; };
   // モード/出題/難易度を切り替えたら、その変動のランキングに貼り替える（PitFlow側のセレクタから呼ばれる）
   PT.refresh=function(){ if(PT.user&&PT.cache){ renderBoard(); updateBestPanel(); } else { updateCap(); } };
